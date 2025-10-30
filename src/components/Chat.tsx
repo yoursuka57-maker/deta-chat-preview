@@ -1,9 +1,11 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Send, Sparkles } from "lucide-react";
 import { ChatMessage } from "./ChatMessage";
+import { streamChat } from "@/lib/streamChat";
+import { toast } from "sonner";
 
 interface Message {
   id: string;
@@ -23,6 +25,13 @@ export const Chat = () => {
   ]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [messages]);
 
   const handleSend = async () => {
     if (!input.trim() || isLoading) return;
@@ -38,17 +47,46 @@ export const Chat = () => {
     setInput("");
     setIsLoading(true);
 
-    // Simulate AI response
-    setTimeout(() => {
-      const aiMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        role: "assistant",
-        content: "זו תשובה לדוגמה. בגרסה המלאה, כאן יהיה אינטגרציה עם AI אמיתי.",
-        timestamp: new Date(),
-      };
-      setMessages((prev) => [...prev, aiMessage]);
+    let assistantContent = "";
+    const upsertAssistant = (chunk: string) => {
+      assistantContent += chunk;
+      setMessages((prev) => {
+        const last = prev[prev.length - 1];
+        if (last?.role === "assistant") {
+          return prev.map((m, i) =>
+            i === prev.length - 1 ? { ...m, content: assistantContent } : m
+          );
+        }
+        return [
+          ...prev,
+          {
+            id: Date.now().toString(),
+            role: "assistant",
+            content: assistantContent,
+            timestamp: new Date(),
+          },
+        ];
+      });
+    };
+
+    try {
+      await streamChat({
+        messages: messages
+          .concat(userMessage)
+          .map((m) => ({ role: m.role, content: m.content })),
+        onDelta: (chunk) => upsertAssistant(chunk),
+        onDone: () => setIsLoading(false),
+        onError: (error) => {
+          toast.error(error);
+          setIsLoading(false);
+          setMessages((prev) => prev.slice(0, -1));
+        },
+      });
+    } catch (error) {
+      toast.error("שגיאה בשליחת ההודעה");
       setIsLoading(false);
-    }, 1000);
+      setMessages((prev) => prev.slice(0, -1));
+    }
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -89,6 +127,7 @@ export const Chat = () => {
               <span className="text-sm">Aura חושב...</span>
             </div>
           )}
+          <div ref={scrollRef} />
         </div>
       </ScrollArea>
 
