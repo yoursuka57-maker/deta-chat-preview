@@ -12,6 +12,8 @@ interface Message {
   role: "user" | "assistant";
   content: string;
   timestamp: Date;
+  images?: string[];
+  isTyping?: boolean;
 }
 
 export const Chat = () => {
@@ -44,17 +46,24 @@ export const Chat = () => {
     };
 
     setMessages((prev) => [...prev, userMessage]);
+    const currentInput = input;
     setInput("");
     setIsLoading(true);
 
+    // Detect if user wants to generate an image
+    const imageKeywords = ["צור תמונה", "תמונה של", "הראה לי תמונה", "generate image", "create image"];
+    const generateImage = imageKeywords.some(keyword => currentInput.includes(keyword));
+
     let assistantContent = "";
+    const assistantImages: string[] = [];
+    
     const upsertAssistant = (chunk: string) => {
       assistantContent += chunk;
       setMessages((prev) => {
         const last = prev[prev.length - 1];
         if (last?.role === "assistant") {
           return prev.map((m, i) =>
-            i === prev.length - 1 ? { ...m, content: assistantContent } : m
+            i === prev.length - 1 ? { ...m, content: assistantContent, images: assistantImages, isTyping: true } : m
           );
         }
         return [
@@ -64,6 +73,8 @@ export const Chat = () => {
             role: "assistant",
             content: assistantContent,
             timestamp: new Date(),
+            images: assistantImages,
+            isTyping: true,
           },
         ];
       });
@@ -74,8 +85,33 @@ export const Chat = () => {
         messages: messages
           .concat(userMessage)
           .map((m) => ({ role: m.role, content: m.content })),
+        model: "LPT-3.5",
+        generateImage,
         onDelta: (chunk) => upsertAssistant(chunk),
-        onDone: () => setIsLoading(false),
+        onImage: (imageUrl) => {
+          assistantImages.push(imageUrl);
+          setMessages((prev) => {
+            const last = prev[prev.length - 1];
+            if (last?.role === "assistant") {
+              return prev.map((m, i) =>
+                i === prev.length - 1 ? { ...m, images: [...assistantImages] } : m
+              );
+            }
+            return prev;
+          });
+        },
+        onDone: () => {
+          setIsLoading(false);
+          setMessages((prev) => {
+            const last = prev[prev.length - 1];
+            if (last?.role === "assistant") {
+              return prev.map((m, i) =>
+                i === prev.length - 1 ? { ...m, isTyping: false } : m
+              );
+            }
+            return prev;
+          });
+        },
         onError: (error) => {
           toast.error(error);
           setIsLoading(false);

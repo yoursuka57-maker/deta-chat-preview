@@ -2,12 +2,18 @@ type Msg = { role: "user" | "assistant"; content: string };
 
 export async function streamChat({
   messages,
+  model = "LPT-3.5",
+  generateImage = false,
   onDelta,
+  onImage,
   onDone,
   onError,
 }: {
   messages: Msg[];
+  model?: string;
+  generateImage?: boolean;
   onDelta: (deltaText: string) => void;
+  onImage?: (imageUrl: string) => void;
   onDone: () => void;
   onError?: (error: string) => void;
 }) {
@@ -20,7 +26,7 @@ export async function streamChat({
         "Content-Type": "application/json",
         Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
       },
-      body: JSON.stringify({ messages }),
+      body: JSON.stringify({ messages, model, generateImage }),
     });
 
     if (!resp.ok) {
@@ -63,6 +69,16 @@ export async function streamChat({
           const parsed = JSON.parse(jsonStr);
           const content = parsed.choices?.[0]?.delta?.content as string | undefined;
           if (content) onDelta(content);
+          
+          // Check for images
+          const images = parsed.choices?.[0]?.message?.images;
+          if (images && onImage) {
+            for (const img of images) {
+              if (img.image_url?.url) {
+                onImage(img.image_url.url);
+              }
+            }
+          }
         } catch {
           textBuffer = line + "\n" + textBuffer;
           break;
@@ -82,6 +98,16 @@ export async function streamChat({
           const parsed = JSON.parse(jsonStr);
           const content = parsed.choices?.[0]?.delta?.content as string | undefined;
           if (content) onDelta(content);
+          
+          // Check for images
+          const images = parsed.choices?.[0]?.message?.images;
+          if (images && onImage) {
+            for (const img of images) {
+              if (img.image_url?.url) {
+                onImage(img.image_url.url);
+              }
+            }
+          }
         } catch {
           /* ignore partial leftovers */
         }
