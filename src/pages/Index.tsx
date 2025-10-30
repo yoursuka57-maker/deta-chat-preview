@@ -22,7 +22,7 @@ const Index = () => {
 
           {/* Hero text */}
           <h1 className="mb-6 bg-gradient-to-r from-primary to-secondary bg-clip-text text-6xl font-bold text-transparent">
-            Aura Chat
+            Deta Chat
           </h1>
           <p className="mb-4 text-2xl font-semibold text-foreground">
             עוזר AI חכם ומתקדם
