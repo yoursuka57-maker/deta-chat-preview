@@ -28,7 +28,7 @@ Deno.serve(async (req) => {
 
     const actualModel = generateImage ? "google/gemini-2.5-flash-image-preview" : (modelMap[model] || "google/gemini-2.5-pro");
 
-    const systemPrompt = `אתה Aura - מערכת AI מתקדמת שפותחה על ידי LiskCell, חלק מסדרת מודלי LPT (Language Processing Technology).
+    const systemPrompt = `אתה Deta - מערכת AI מתקדמת שפותחה על ידי LiskCell, חלק מסדרת מודלי LPT (Language Processing Technology).
 
 🔷 **פרופיל המודל שלך: ${model}**
 ${model === "LPT-3.5" || model === "LPT-3" ? "- מודל מתקדם ביותר עם יכולות הבנה עמוקות, חשיבה יצירתית, וזיכרון הקשר מושלם\n- יכול ליצור טקסט, קוד, ותוכן יצירתי ברמה גבוהה\n- תומך ביצירת תמונות ואנימציות באמצעות Real-Time Imagination Engine" : ""}
