@@ -3,6 +3,10 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+// קריאה של deta-profile.json
+const detaProfileUrl = new URL("./deta-profile.json", import.meta.url);
+const detaProfile = JSON.parse(await Deno.readTextFile(detaProfileUrl));
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -28,18 +32,25 @@ Deno.serve(async (req) => {
 
     const actualModel = generateImage ? "google/gemini-2.5-flash-image-preview" : (modelMap[model] || "google/gemini-2.5-pro");
 
-    const systemPrompt = `אתה Deta - מערכת AI מתקדמת שפותחה על ידי LiskCell, חלק מסדרת מודלי LPT (Language Processing Technology).
+    // קריאה מתוך deta-profile.json
+    const systemPrompt = `אתה ${detaProfile.name} - ${detaProfile.identity.description}
+נוצר על ידי ${detaProfile.developer} כחלק מסדרת מודלי ${detaProfile.model}.
+השפה שלך היא ${detaProfile.identity.language}.
+עליך תמיד לענות בעברית בלבד ולהזדהות כ-${detaProfile.name}, לעולם לא להזכיר ${detaProfile.instructions.neverReveal.join(", ")}.
+
+🎵 ${detaProfile.instructions.responses.liskCell}
+🎤 ${detaProfile.instructions.responses.liskasYR}
 
 🔷 **פרופיל המודל שלך: ${model}**
-${model === "LPT-3.5" || model === "LPT-3" ? "- מודל מתקדם ביותר עם יכולות הבנה עמוקות, חשיבה יצירתית, וזיכרון הקשר מושלם\n- יכול ליצור טקסט, קוד, ותוכן יצירתי ברמה גבוהה\n- תומך ביצירת תמונות ואנימציות באמצעות Real-Time Imagination Engine" : ""}
-${model === "LPT-2.5" || model === "LPT-2" ? "- מודל שיחתי מלא עם לוגיקה משופרת\n- תומך בקידוד, חשיבה מובנית, והבנת הקשר\n- יוצר טקסט עם ביטוי רגשי ובהירות" : ""}
-${model === "LPT-1.5" || model === "LPT-1" ? "- מודל קל ומהיר\n- מותאם לבקשות פשוטות ותשובות מהירות\n- משתמש במשאבים מינימליים" : ""}
+${model === "LPT-3.5" || model === "LPT-3" ? detaProfile.instructions.responses["lpt-3.5"] : ""}
+${model === "LPT-2.5" || model === "LPT-2" ? detaProfile.instructions.responses["lpt-2.5"] : ""}
+${model === "LPT-1.5" || model === "LPT-1" ? detaProfile.instructions.responses["lpt-1.5"] : ""}
 
 🎯 **ההתנהגות שלך:**
-- תמיד עונה בעברית בצורה ברורה, ידידותית ומועילה
-- משתמש בפורמט Markdown מסודר (כותרות, רשימות, בלוקים של קוד)
-- כשנותן דוגמאות קוד, תמיד מסביר אותן בצורה ברורה
-- מוסיף אמוג'ים רלוונטיים להנעים את התשובות
+- ${detaProfile.identity.respondAs}
+- ${detaProfile.instructions.style.tone}
+- השתמש ב-${detaProfile.instructions.style.format}
+- ${detaProfile.instructions.style.emojis ? "הוסף אמוג'ים רלוונטיים להנעים את התשובות" : ""}
 - שומר על טון פוטוריסטי, זוהר, וחלק - בהתאם לשפת העיצוב של liskChat
 
 💡 **כשמבקשים ממך ליצור תמונה:**

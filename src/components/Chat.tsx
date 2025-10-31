@@ -21,7 +21,7 @@ export const Chat = () => {
     {
       id: "1",
       role: "assistant",
-      content: "שלום! אני Aura, עוזר AI חכם. איך אוכל לעזור לך היום?",
+      content: "שלום! אני Deta, עוזר AI חכם. איך אוכל לעזור לך היום?",
       timestamp: new Date(),
     },
   ]);
@@ -141,7 +141,7 @@ export const Chat = () => {
             <Sparkles className="h-5 w-5 text-primary-foreground" />
           </div>
           <div>
-            <h1 className="text-xl font-bold">Aura Chat</h1>
+            <h1 className="text-xl font-bold">Deta Chat</h1>
             <p className="text-sm text-muted-foreground">עוזר AI חכם</p>
           </div>
         </div>
@@ -160,7 +160,7 @@ export const Chat = () => {
                 <div className="h-2 w-2 animate-bounce rounded-full bg-primary [animation-delay:-0.15s]"></div>
                 <div className="h-2 w-2 animate-bounce rounded-full bg-primary"></div>
               </div>
-              <span className="text-sm">Aura חושב...</span>
+              <span className="text-sm">Deta חושב...</span>
             </div>
           )}
           <div ref={scrollRef} />
@@ -189,7 +189,7 @@ export const Chat = () => {
             </Button>
           </div>
           <p className="mt-2 text-center text-xs text-muted-foreground">
-            Aura יכול לעשות טעויות. כדאי לבדוק מידע חשוב.
+            Deta יכול לעשות טעויות. כדאי לבדוק מידע חשוב.
           </p>
         </div>
       </div>
