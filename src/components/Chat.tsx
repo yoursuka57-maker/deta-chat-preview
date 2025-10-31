@@ -6,6 +6,13 @@ import { Send, Sparkles } from "lucide-react";
 import { ChatMessage } from "./ChatMessage";
 import { streamChat } from "@/lib/streamChat";
 import { toast } from "sonner";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface Message {
   id: string;
@@ -27,6 +34,7 @@ export const Chat = () => {
   ]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [selectedModel, setSelectedModel] = useState("LPT-3.5");
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -85,7 +93,7 @@ export const Chat = () => {
         messages: messages
           .concat(userMessage)
           .map((m) => ({ role: m.role, content: m.content })),
-        model: "LPT-3.5",
+        model: selectedModel,
         generateImage,
         onDelta: (chunk) => upsertAssistant(chunk),
         onImage: (imageUrl) => {
@@ -140,10 +148,23 @@ export const Chat = () => {
           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-secondary shadow-glow">
             <Sparkles className="h-5 w-5 text-primary-foreground" />
           </div>
-          <div>
+          <div className="flex-1">
             <h1 className="text-xl font-bold">Deta Chat</h1>
             <p className="text-sm text-muted-foreground">עוזר AI חכם</p>
           </div>
+          <Select value={selectedModel} onValueChange={setSelectedModel}>
+            <SelectTrigger className="w-[140px]">
+              <SelectValue placeholder="בחר מודל" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="LPT-1">LPT-1 ⚙️</SelectItem>
+              <SelectItem value="LPT-1.5">LPT-1.5 ⚡</SelectItem>
+              <SelectItem value="LPT-2">LPT-2 🧠</SelectItem>
+              <SelectItem value="LPT-2.5">LPT-2.5 💬</SelectItem>
+              <SelectItem value="LPT-3">LPT-3 🌐</SelectItem>
+              <SelectItem value="LPT-3.5">LPT-3.5 🚀</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
       </header>
 
