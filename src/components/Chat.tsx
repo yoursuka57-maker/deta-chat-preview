@@ -71,7 +71,7 @@ export const Chat = () => {
         const last = prev[prev.length - 1];
         if (last?.role === "assistant") {
           return prev.map((m, i) =>
-            i === prev.length - 1 ? { ...m, content: assistantContent, images: assistantImages, isTyping: true } : m
+            i === prev.length - 1 ? { ...m, content: assistantContent, images: assistantImages } : m
           );
         }
         return [
@@ -82,7 +82,6 @@ export const Chat = () => {
             content: assistantContent,
             timestamp: new Date(),
             images: assistantImages,
-            isTyping: true,
           },
         ];
       });
@@ -110,15 +109,6 @@ export const Chat = () => {
         },
         onDone: () => {
           setIsLoading(false);
-          setMessages((prev) => {
-            const last = prev[prev.length - 1];
-            if (last?.role === "assistant") {
-              return prev.map((m, i) =>
-                i === prev.length - 1 ? { ...m, isTyping: false } : m
-              );
-            }
-            return prev;
-          });
         },
         onError: (error) => {
           toast.error(error);
