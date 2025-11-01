@@ -383,7 +383,7 @@ export const Chat = () => {
                   transition={{ duration: 1.5, repeat: Infinity }}
                   className="h-3 w-3 rounded-full bg-primary shadow-neon"
                 />
-                <span className="text-sm">LiskCell Engine: Creating Response...</span>
+                <span className="text-sm">Deta Response...</span>
               </motion.div>
             )}
             <div ref={scrollRef} />
