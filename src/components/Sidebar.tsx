@@ -1,8 +1,17 @@
-import { MessageSquarePlus, Library, History, Sparkles } from "lucide-react";
+import { MessageSquarePlus, Library, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
+import { UserMenu } from "./UserMenu";
+import { useNavigate } from "react-router-dom";
 
-export const Sidebar = () => {
+interface SidebarProps {
+  onShowHistory: () => void;
+  onNewChat: () => void;
+}
+
+export const Sidebar = ({ onShowHistory, onNewChat }: SidebarProps) => {
+  const navigate = useNavigate();
+
   return (
     <motion.aside
       initial={{ x: -100, opacity: 0 }}
@@ -31,6 +40,7 @@ export const Sidebar = () => {
       <nav className="flex-1 px-3 space-y-2">
         <Button
           variant="ghost"
+          onClick={onNewChat}
           className="w-full justify-start gap-3 hover:bg-sidebar-accent hover:text-primary transition-smooth"
         >
           <MessageSquarePlus className="h-5 w-5" />
@@ -44,23 +54,11 @@ export const Sidebar = () => {
           <Library className="h-5 w-5" />
           <span>Library</span>
         </Button>
-
-        <div className="pt-4">
-          <div className="flex items-center gap-2 px-3 py-2 text-sm text-muted-foreground">
-            <History className="h-4 w-4" />
-            <span>Chat History</span>
-          </div>
-        </div>
       </nav>
 
-      {/* Sign In Button */}
+      {/* User Menu or Auth Button */}
       <div className="p-4">
-        <div className="text-center text-sm text-muted-foreground mb-3">
-          Sign In or up to open the feature
-        </div>
-        <Button className="w-full gradient-primary shadow-glow hover:shadow-neon transition-smooth">
-          Sign Up / Sign In
-        </Button>
+        <UserMenu onShowHistory={onShowHistory} navigate={navigate} />
       </div>
     </motion.aside>
   );

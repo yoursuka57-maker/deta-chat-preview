@@ -1,13 +1,16 @@
 import { useState, useRef, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Send, Sparkles, Paperclip, Mic } from "lucide-react";
+import { Send, Sparkles, Paperclip, Mic, X } from "lucide-react";
 import { ChatMessage } from "./ChatMessage";
 import { streamChat } from "@/lib/streamChat";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import { Sidebar } from "./Sidebar";
+import { ChatHistory } from "./ChatHistory";
+import { supabase } from "@/integrations/supabase/client";
 import {
   Select,
   SelectContent,
@@ -26,18 +29,39 @@ interface Message {
 }
 
 export const Chat = () => {
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: "1",
-      role: "assistant",
-      content: "שלום! אני Deta, עוזר AI חכם. איך אוכל לעזור לך היום?",
-      timestamp: new Date(),
-    },
-  ]);
+  const navigate = useNavigate();
+  const [user, setUser] = useState<any>(null);
+  const [currentConversationId, setCurrentConversationId] = useState<string | null>(null);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [selectedModel, setSelectedModel] = useState("LPT-3.5");
+  const [showHistory, setShowHistory] = useState(false);
+  const [uploadedImage, setUploadedImage] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    // Check auth
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (!user) {
+        navigate("/auth");
+      } else {
+        setUser(user);
+        createNewConversation();
+      }
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (!session) {
+        navigate("/auth");
+      } else {
+        setUser(session.user);
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, [navigate]);
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -45,19 +69,122 @@ export const Chat = () => {
     }
   }, [messages]);
 
+  const createNewConversation = async () => {
+    if (!user) return;
+
+    try {
+      const { data, error } = await supabase
+        .from("conversations")
+        .insert([
+          {
+            user_id: user.id,
+            title: "New Conversation",
+          },
+        ])
+        .select()
+        .single();
+
+      if (error) throw error;
+      setCurrentConversationId(data.id);
+      setMessages([]);
+    } catch (error: any) {
+      toast.error("Failed to create conversation");
+    }
+  };
+
+  const loadConversation = async (conversationId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from("messages")
+        .select("*")
+        .eq("conversation_id", conversationId)
+        .order("created_at", { ascending: true });
+
+      if (error) throw error;
+
+      const loadedMessages: Message[] = data.map((msg) => ({
+        id: msg.id,
+        role: msg.role as "user" | "assistant",
+        content: msg.content,
+        timestamp: new Date(msg.created_at),
+        images: msg.image_url ? [msg.image_url] : undefined,
+      }));
+
+      setMessages(loadedMessages);
+      setCurrentConversationId(conversationId);
+    } catch (error: any) {
+      toast.error("Failed to load conversation");
+    }
+  };
+
+  const saveMessage = async (message: Message) => {
+    if (!currentConversationId) return;
+
+    try {
+      await supabase.from("messages").insert([
+        {
+          conversation_id: currentConversationId,
+          role: message.role,
+          content: message.content,
+          image_url: message.images?.[0] || null,
+        },
+      ]);
+
+      // Update conversation title if it's the first user message
+      if (message.role === "user" && messages.length === 0) {
+        const title = message.content.slice(0, 50);
+        await supabase
+          .from("conversations")
+          .update({ title })
+          .eq("id", currentConversationId);
+      }
+    } catch (error: any) {
+      console.error("Failed to save message:", error);
+    }
+  };
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !user) return;
+
+    try {
+      const fileExt = file.name.split(".").pop();
+      const fileName = `${user.id}/${Date.now()}.${fileExt}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from("chat-images")
+        .upload(fileName, file);
+
+      if (uploadError) throw uploadError;
+
+      const { data } = supabase.storage
+        .from("chat-images")
+        .getPublicUrl(fileName);
+
+      setUploadedImage(data.publicUrl);
+      toast.success("Image uploaded!");
+    } catch (error: any) {
+      toast.error("Failed to upload image");
+    }
+  };
+
   const handleSend = async () => {
-    if (!input.trim() || isLoading) return;
+    if ((!input.trim() && !uploadedImage) || isLoading) return;
 
     const userMessage: Message = {
       id: Date.now().toString(),
       role: "user",
-      content: input,
+      content: input || "Check this image",
       timestamp: new Date(),
+      images: uploadedImage ? [uploadedImage] : undefined,
     };
 
     setMessages((prev) => [...prev, userMessage]);
+    await saveMessage(userMessage);
+
     const currentInput = input;
     setInput("");
+    setUploadedImage(null);
     setIsLoading(true);
 
     // Detect if user wants to generate an image
@@ -109,8 +236,17 @@ export const Chat = () => {
             return prev;
           });
         },
-        onDone: () => {
+        onDone: async () => {
           setIsLoading(false);
+          // Save assistant message
+          const assistantMessage: Message = {
+            id: Date.now().toString(),
+            role: "assistant",
+            content: assistantContent,
+            timestamp: new Date(),
+            images: assistantImages.length > 0 ? assistantImages : undefined,
+          };
+          await saveMessage(assistantMessage);
         },
         onError: (error) => {
           toast.error(error);
@@ -132,11 +268,21 @@ export const Chat = () => {
     }
   };
 
-  const isEmpty = messages.length === 1;
+  const isEmpty = messages.length === 0;
 
   return (
     <div className="flex h-screen bg-background gradient-cosmic">
-      <Sidebar />
+      <Sidebar 
+        onShowHistory={() => setShowHistory(true)}
+        onNewChat={createNewConversation}
+      />
+      
+      <ChatHistory
+        isOpen={showHistory}
+        onClose={() => setShowHistory(false)}
+        onSelectConversation={loadConversation}
+        currentConversationId={currentConversationId || undefined}
+      />
       
       <div className="flex-1 flex flex-col">
         {/* Header */}
@@ -252,10 +398,36 @@ export const Chat = () => {
           className="glass border-t border-border/50 px-4 py-6"
         >
           <div className="mx-auto max-w-4xl">
-            <div className="relative flex items-center gap-3 p-3 rounded-2xl glass glow-border">
+            {uploadedImage && (
+              <div className="mb-3 relative inline-block">
+                <img
+                  src={uploadedImage}
+                  alt="Upload preview"
+                  className="h-20 w-20 object-cover rounded-xl glass glow-border"
+                />
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  onClick={() => setUploadedImage(null)}
+                  className="absolute -top-2 -right-2 h-6 w-6 rounded-full bg-destructive hover:bg-destructive/80"
+                >
+                  <X className="h-3 w-3" />
+                </Button>
+              </div>
+            )}
+            
+            <div className="relative flex items-center gap-3 p-3 rounded-2xl glass glow-border shadow-neon">
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handleImageUpload}
+                className="hidden"
+              />
               <Button
                 variant="ghost"
                 size="icon"
+                onClick={() => fileInputRef.current?.click()}
                 className="hover:bg-primary/20 hover:text-primary transition-smooth"
               >
                 <Paperclip className="h-5 w-5" />
@@ -284,7 +456,7 @@ export const Chat = () => {
               >
                 <Button
                   onClick={handleSend}
-                  disabled={!input.trim() || isLoading}
+                  disabled={(!input.trim() && !uploadedImage) || isLoading}
                   size="icon"
                   className="gradient-primary shadow-neon transition-smooth hover:shadow-glow"
                 >
