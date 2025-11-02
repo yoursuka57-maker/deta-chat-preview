@@ -272,6 +272,8 @@ export const Chat = () => {
       <Sidebar 
         onShowHistory={() => setShowHistory(true)}
         onNewChat={createNewConversation}
+        onSelectConversation={loadConversation}
+        currentConversationId={currentConversationId || undefined}
       />
       
       <ChatHistory
@@ -426,6 +428,7 @@ export const Chat = () => {
                 size="icon"
                 onClick={() => fileInputRef.current?.click()}
                 className="hover:bg-primary/20 hover:text-primary transition-smooth"
+                title="Upload files (images, documents, etc.)"
               >
                 <Paperclip className="h-5 w-5" />
               </Button>
@@ -443,6 +446,8 @@ export const Chat = () => {
                 variant="ghost"
                 size="icon"
                 className="hover:bg-primary/20 hover:text-primary transition-smooth"
+                disabled
+                title="Voice input coming soon"
               >
                 <Mic className="h-5 w-5" />
               </Button>
