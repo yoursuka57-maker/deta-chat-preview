@@ -1,4 +1,4 @@
-import { MessageSquarePlus, Library, Sparkles } from "lucide-react";
+import { MessageSquarePlus, Library, History, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
 import { UserMenu } from "./UserMenu";
@@ -53,6 +53,15 @@ export const Sidebar = ({ onShowHistory, onNewChat }: SidebarProps) => {
         >
           <Library className="h-5 w-5" />
           <span>Library</span>
+        </Button>
+
+        <Button
+          variant="ghost"
+          onClick={onShowHistory}
+          className="w-full justify-start gap-3 hover:bg-sidebar-accent hover:text-primary transition-smooth"
+        >
+          <History className="h-5 w-5" />
+          <span>Chat History</span>
         </Button>
       </nav>
 
