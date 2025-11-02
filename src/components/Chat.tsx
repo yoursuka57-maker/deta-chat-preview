@@ -44,19 +44,16 @@ export const Chat = () => {
   useEffect(() => {
     // Check auth
     supabase.auth.getUser().then(({ data: { user } }) => {
-      if (!user) {
-        navigate("/auth");
-      } else {
-        setUser(user);
+      setUser(user);
+      if (user) {
         createNewConversation();
       }
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (!session) {
-        navigate("/auth");
-      } else {
-        setUser(session.user);
+      setUser(session?.user || null);
+      if (session?.user) {
+        createNewConversation();
       }
     });
 
