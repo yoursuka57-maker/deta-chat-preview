@@ -48,7 +48,7 @@ export const Sidebar = ({
             isCollapsed ? "flex-col gap-2" : "gap-2"
           }`}
         >
-          {/* Sparkles Logo with Animation */}
+          {/* Sparkles Logo */}
           <motion.div className="relative flex items-center justify-center">
             <motion.div
               animate={{ scale: [1, 1.2, 1], opacity: [0.5, 0.8, 0.5] }}
@@ -63,7 +63,7 @@ export const Sidebar = ({
             </motion.div>
           </motion.div>
 
-          {/* Logo Text when open */}
+          {/* Logo Text */}
           <AnimatePresence>
             {!isCollapsed && (
               <motion.h1
@@ -122,39 +122,31 @@ export const Sidebar = ({
 
         {/* Chat History */}
         <div className="flex-1 flex flex-col min-h-0 pt-4">
-          <div
-            className={`flex items-center ${
-              isCollapsed ? "justify-center" : "gap-2 px-3 mb-2"
-            }`}
-          >
-            <History className="h-4 w-4 text-muted-foreground" />
-            {!isCollapsed && (
-              <h3 className="text-xs font-semibold text-muted-foreground">
-                Chat History
-              </h3>
-            )}
-          </div>
+          {/* רק אם פתוח נציג את הכותרת ורשימת השיחות */}
+          {!isCollapsed && (
+            <>
+              <div className="flex items-center gap-2 px-3 mb-2">
+                <History className="h-4 w-4 text-muted-foreground" />
+                <h3 className="text-xs font-semibold text-muted-foreground">
+                  Chat History
+                </h3>
+              </div>
 
-          {/* רשימת השיחות */}
-          <motion.div
-            animate={{
-              opacity: isCollapsed ? 0 : 1,
-              height: isCollapsed ? 0 : "auto",
-            }}
-            transition={{ duration: 0.2 }}
-            className={`flex-1 ${
-              isCollapsed
-                ? "overflow-hidden pointer-events-none"
-                : "overflow-y-auto"
-            }`}
-          >
-            {!isCollapsed && (
-              <ConversationsList
-                onSelectConversation={onSelectConversation}
-                currentConversationId={currentConversationId}
-              />
-            )}
-          </motion.div>
+              <div className="flex-1 overflow-y-auto pr-1">
+                <ConversationsList
+                  onSelectConversation={onSelectConversation}
+                  currentConversationId={currentConversationId}
+                />
+              </div>
+            </>
+          )}
+
+          {/* כשהסרגל סגור - רק האייקון בלי טקסט בכלל */}
+          {isCollapsed && (
+            <div className="flex justify-center items-center py-2">
+              <History className="h-5 w-5 text-muted-foreground" />
+            </div>
+          )}
         </div>
       </nav>
 
