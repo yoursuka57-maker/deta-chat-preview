@@ -32,9 +32,9 @@ export const Sidebar = ({ onNewChat, onSelectConversation, currentConversationId
         variant="ghost"
         size="icon"
         onClick={() => setIsCollapsed(!isCollapsed)}
-        className="absolute -right-3 top-6 z-20 h-6 w-6 rounded-full border border-sidebar-border bg-sidebar-background hover:bg-sidebar-accent"
+        className="absolute -right-3 top-6 z-20 h-7 w-7 rounded-full border border-sidebar-border bg-sidebar-background hover:bg-sidebar-accent flex items-center justify-center p-0"
       >
-        <PanelLeft className={`h-4 w-4 transition-transform ${isCollapsed ? 'rotate-180' : ''}`} />
+        <PanelLeft className={`h-4 w-4 transition-transform duration-200 ${isCollapsed ? 'rotate-180' : 'rotate-0'}`} />
       </Button>
 
       {/* Logo */}
