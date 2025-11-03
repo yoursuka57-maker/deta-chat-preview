@@ -6,7 +6,7 @@ import {
   History,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { UserMenu } from "./UserMenu";
 import { useNavigate } from "react-router-dom";
 import { ConversationsList } from "./ConversationsList";
@@ -37,41 +37,62 @@ export const Sidebar = ({
       transition={{ duration: 0.3 }}
       className="h-screen bg-sidebar-background border-r border-sidebar-border flex flex-col"
     >
-      {/* Header Section */}
-      <div className="flex flex-col items-center py-4 gap-4">
-        {/* Sparkles Logo - always visible */}
-        <motion.div className="relative">
-          <motion.div
-            animate={{ scale: [1, 1.2, 1], opacity: [0.5, 0.8, 0.5] }}
-            transition={{ duration: 2, repeat: Infinity }}
-            className="absolute inset-0 bg-primary/20 rounded-full blur-xl"
-          />
-          <motion.div
-            animate={{ rotate: [0, 360] }}
-            transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
-          >
-            <Sparkles className="h-8 w-8 text-primary relative z-10" />
+      {/* Header */}
+      <div
+        className={`flex items-center ${
+          isCollapsed ? "flex-col gap-4 py-4" : "justify-between p-4"
+        }`}
+      >
+        <div
+          className={`flex items-center ${
+            isCollapsed ? "flex-col gap-2" : "gap-2"
+          }`}
+        >
+          {/* Sparkles Logo with Animation */}
+          <motion.div className="relative flex items-center justify-center">
+            <motion.div
+              animate={{ scale: [1, 1.2, 1], opacity: [0.5, 0.8, 0.5] }}
+              transition={{ duration: 2, repeat: Infinity }}
+              className="absolute inset-0 bg-primary/20 rounded-full blur-xl"
+            />
+            <motion.div
+              animate={{ rotate: [0, 360] }}
+              transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+            >
+              <Sparkles className="h-8 w-8 text-primary relative z-10" />
+            </motion.div>
           </motion.div>
-        </motion.div>
+
+          {/* Logo Text when open */}
+          <AnimatePresence>
+            {!isCollapsed && (
+              <motion.h1
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -10 }}
+                transition={{ duration: 0.2 }}
+                className="text-2xl font-bold text-foreground"
+              >
+                Deta
+              </motion.h1>
+            )}
+          </AnimatePresence>
+        </div>
 
         {/* Collapse Button */}
         <Button
           variant="ghost"
           size="icon"
           onClick={() => setIsCollapsed(!isCollapsed)}
-          className="h-7 w-7 rounded-full border border-sidebar-border bg-sidebar-background hover:bg-sidebar-accent flex items-center justify-center p-0"
+          className="h-7 w-7 rounded-full border border-sidebar-border hover:bg-sidebar-accent flex items-center justify-center p-0"
         >
-          <PanelLeft
-            className={`h-4 w-4 transition-transform duration-200 ${
-              isCollapsed ? "rotate-180" : "rotate-0"
-            }`}
-          />
+          <motion.div
+            animate={{ rotate: isCollapsed ? 180 : 0 }}
+            transition={{ duration: 0.3 }}
+          >
+            <PanelLeft className="h-4 w-4" />
+          </motion.div>
         </Button>
-
-        {/* Logo Text when open */}
-        {!isCollapsed && (
-          <h1 className="text-2xl font-bold text-foreground">Deta</h1>
-        )}
       </div>
 
       {/* Navigation */}
@@ -79,7 +100,9 @@ export const Sidebar = ({
         <Button
           variant="ghost"
           onClick={onNewChat}
-          className={`w-full ${isCollapsed ? "justify-center" : "justify-start"} gap-3 hover:bg-sidebar-accent hover:text-primary transition-smooth`}
+          className={`w-full ${
+            isCollapsed ? "justify-center" : "justify-start"
+          } gap-3 hover:bg-sidebar-accent hover:text-primary transition-all`}
           title="New Chat"
         >
           <MessageSquarePlus className="h-5 w-5" />
@@ -88,7 +111,9 @@ export const Sidebar = ({
 
         <Button
           variant="ghost"
-          className={`w-full ${isCollapsed ? "justify-center" : "justify-start"} gap-3 hover:bg-sidebar-accent hover:text-primary transition-smooth`}
+          className={`w-full ${
+            isCollapsed ? "justify-center" : "justify-start"
+          } gap-3 hover:bg-sidebar-accent hover:text-primary transition-all`}
           title="Library"
         >
           <Library className="h-5 w-5" />
@@ -97,7 +122,11 @@ export const Sidebar = ({
 
         {/* Chat History */}
         <div className="flex-1 flex flex-col min-h-0 pt-4">
-          <div className={`flex items-center ${isCollapsed ? "justify-center" : "gap-2 px-3 mb-2"}`}>
+          <div
+            className={`flex items-center ${
+              isCollapsed ? "justify-center" : "gap-2 px-3 mb-2"
+            }`}
+          >
             <History className="h-4 w-4 text-muted-foreground" />
             {!isCollapsed && (
               <h3 className="text-xs font-semibold text-muted-foreground">
@@ -114,7 +143,7 @@ export const Sidebar = ({
         </div>
       </nav>
 
-      {/* User Menu */}
+      {/* Footer / User Menu */}
       <div className="p-4">
         {!isCollapsed ? (
           <UserMenu navigate={navigate} />
