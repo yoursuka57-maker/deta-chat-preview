@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { LogOut, History, Moon, Sun, Settings as SettingsIcon } from "lucide-react";
+import { LogOut, Moon, Sun, Settings as SettingsIcon } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -8,11 +8,10 @@ import { Button } from "@/components/ui/button";
 import { NavigateFunction } from "react-router-dom";
 
 interface UserMenuProps {
-  onShowHistory: () => void;
   navigate: NavigateFunction;
 }
 
-export const UserMenu = ({ onShowHistory, navigate }: UserMenuProps) => {
+export const UserMenu = ({ navigate }: UserMenuProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [user, setUser] = useState<any>(null);
   const [theme, setTheme] = useState<"dark" | "light">("dark");
@@ -91,18 +90,6 @@ export const UserMenu = ({ onShowHistory, navigate }: UserMenuProps) => {
               exit={{ opacity: 0, y: 10, scale: 0.95 }}
               className="absolute bottom-full mb-2 left-0 w-64 glass glow-border rounded-2xl shadow-neon p-2 z-50"
             >
-              <Button
-                variant="ghost"
-                className="w-full justify-start gap-3 hover:bg-sidebar-accent"
-                onClick={() => {
-                  onShowHistory();
-                  setIsOpen(false);
-                }}
-              >
-                <History className="h-5 w-5" />
-                <span>Chat History</span>
-              </Button>
-
               <Button
                 variant="ghost"
                 className="w-full justify-start gap-3 hover:bg-sidebar-accent"

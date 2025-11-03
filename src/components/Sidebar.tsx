@@ -1,27 +1,42 @@
-import { MessageSquarePlus, Library, Sparkles } from "lucide-react";
+import { MessageSquarePlus, Library, Sparkles, PanelLeft, History } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
 import { UserMenu } from "./UserMenu";
 import { useNavigate } from "react-router-dom";
 import { ConversationsList } from "./ConversationsList";
+import { useState } from "react";
 
 interface SidebarProps {
-  onShowHistory: () => void;
   onNewChat: () => void;
   onSelectConversation: (conversationId: string) => void;
   currentConversationId?: string;
 }
 
-export const Sidebar = ({ onShowHistory, onNewChat, onSelectConversation, currentConversationId }: SidebarProps) => {
+export const Sidebar = ({ onNewChat, onSelectConversation, currentConversationId }: SidebarProps) => {
   const navigate = useNavigate();
+  const [isCollapsed, setIsCollapsed] = useState(false);
 
   return (
     <motion.aside
       initial={{ x: -100, opacity: 0 }}
-      animate={{ x: 0, opacity: 1 }}
-      transition={{ duration: 0.5 }}
-      className="w-64 h-screen bg-sidebar-background border-r border-sidebar-border flex flex-col"
+      animate={{ 
+        x: 0, 
+        opacity: 1,
+        width: isCollapsed ? "4rem" : "16rem"
+      }}
+      transition={{ duration: 0.3 }}
+      className="h-screen bg-sidebar-background border-r border-sidebar-border flex flex-col relative"
     >
+      {/* Toggle Button */}
+      <Button
+        variant="ghost"
+        size="icon"
+        onClick={() => setIsCollapsed(!isCollapsed)}
+        className="absolute -right-3 top-6 z-20 h-6 w-6 rounded-full border border-sidebar-border bg-sidebar-background hover:bg-sidebar-accent"
+      >
+        <PanelLeft className={`h-4 w-4 transition-transform ${isCollapsed ? 'rotate-180' : ''}`} />
+      </Button>
+
       {/* Logo */}
       <div className="p-6 flex items-center gap-3">
         <motion.div className="relative">
@@ -37,7 +52,7 @@ export const Sidebar = ({ onShowHistory, onNewChat, onSelectConversation, curren
             <Sparkles className="h-8 w-8 text-primary relative z-10" />
           </motion.div>
         </motion.div>
-        <h1 className="text-2xl font-bold text-foreground">Deta</h1>
+        {!isCollapsed && <h1 className="text-2xl font-bold text-foreground">Deta</h1>}
       </div>
 
       {/* Navigation */}
@@ -45,36 +60,50 @@ export const Sidebar = ({ onShowHistory, onNewChat, onSelectConversation, curren
         <Button
           variant="ghost"
           onClick={onNewChat}
-          className="w-full justify-start gap-3 hover:bg-sidebar-accent hover:text-primary transition-smooth"
+          className={`w-full ${isCollapsed ? 'justify-center px-2' : 'justify-start'} gap-3 hover:bg-sidebar-accent hover:text-primary transition-smooth`}
+          title="New Chat"
         >
           <MessageSquarePlus className="h-5 w-5" />
-          <span>New Chat</span>
+          {!isCollapsed && <span>New Chat</span>}
         </Button>
 
-        <Button
-          variant="ghost"
-          className="w-full justify-start gap-3 hover:bg-sidebar-accent hover:text-primary transition-smooth"
-        >
-          <Library className="h-5 w-5" />
-          <span>Library</span>
-        </Button>
+        {!isCollapsed && (
+          <Button
+            variant="ghost"
+            className="w-full justify-start gap-3 hover:bg-sidebar-accent hover:text-primary transition-smooth"
+          >
+            <Library className="h-5 w-5" />
+            <span>Library</span>
+          </Button>
+        )}
 
         {/* Chat History Section */}
-        <div className="flex-1 flex flex-col min-h-0 pt-4">
-          <h3 className="text-xs font-semibold text-muted-foreground px-3 mb-2">CHAT HISTORY</h3>
-          <div className="flex-1 overflow-y-auto">
-            <ConversationsList 
-              onSelectConversation={onSelectConversation}
-              currentConversationId={currentConversationId}
-            />
+        {!isCollapsed ? (
+          <div className="flex-1 flex flex-col min-h-0 pt-4">
+            <div className="flex items-center gap-2 px-3 mb-2">
+              <History className="h-3.5 w-3.5 text-muted-foreground" />
+              <h3 className="text-xs font-semibold text-muted-foreground">Chat History</h3>
+            </div>
+            <div className="flex-1 overflow-y-auto">
+              <ConversationsList 
+                onSelectConversation={onSelectConversation}
+                currentConversationId={currentConversationId}
+              />
+            </div>
           </div>
-        </div>
+        ) : (
+          <div className="flex-1 flex items-center justify-center pt-8">
+            <History className="h-5 w-5 text-muted-foreground" />
+          </div>
+        )}
       </nav>
 
       {/* User Menu or Auth Button */}
-      <div className="p-4">
-        <UserMenu onShowHistory={onShowHistory} navigate={navigate} />
-      </div>
+      {!isCollapsed && (
+        <div className="p-4">
+          <UserMenu navigate={navigate} />
+        </div>
+      )}
     </motion.aside>
   );
 };

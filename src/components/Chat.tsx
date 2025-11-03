@@ -9,7 +9,6 @@ import { streamChat } from "@/lib/streamChat";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import { Sidebar } from "./Sidebar";
-import { ChatHistory } from "./ChatHistory";
 import { supabase } from "@/integrations/supabase/client";
 import {
   Select,
@@ -36,7 +35,6 @@ export const Chat = () => {
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [selectedModel, setSelectedModel] = useState("LPT-3.5");
-  const [showHistory, setShowHistory] = useState(false);
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -270,15 +268,7 @@ export const Chat = () => {
   return (
     <div className="flex h-screen bg-background gradient-cosmic">
       <Sidebar 
-        onShowHistory={() => setShowHistory(true)}
         onNewChat={createNewConversation}
-        onSelectConversation={loadConversation}
-        currentConversationId={currentConversationId || undefined}
-      />
-      
-      <ChatHistory
-        isOpen={showHistory}
-        onClose={() => setShowHistory(false)}
         onSelectConversation={loadConversation}
         currentConversationId={currentConversationId || undefined}
       />
