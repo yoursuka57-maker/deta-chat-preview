@@ -134,12 +134,27 @@ export const Sidebar = ({
               </h3>
             )}
           </div>
-          <div className="flex-1 overflow-y-auto">
-            <ConversationsList
-              onSelectConversation={onSelectConversation}
-              currentConversationId={currentConversationId}
-            />
-          </div>
+
+          {/* רשימת השיחות */}
+          <motion.div
+            animate={{
+              opacity: isCollapsed ? 0 : 1,
+              height: isCollapsed ? 0 : "auto",
+            }}
+            transition={{ duration: 0.2 }}
+            className={`flex-1 ${
+              isCollapsed
+                ? "overflow-hidden pointer-events-none"
+                : "overflow-y-auto"
+            }`}
+          >
+            {!isCollapsed && (
+              <ConversationsList
+                onSelectConversation={onSelectConversation}
+                currentConversationId={currentConversationId}
+              />
+            )}
+          </motion.div>
         </div>
       </nav>
 
