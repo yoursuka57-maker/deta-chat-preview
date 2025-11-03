@@ -158,7 +158,7 @@ export const Sidebar = ({
           <Button
             variant="outline"
             className="w-full text-xs px-2 py-1"
-            onClick={() => navigate("/login")}
+            onClick={() => navigate("/auth")}
           >
             🔐
           </Button>
