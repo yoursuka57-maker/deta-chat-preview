@@ -37,8 +37,22 @@ export const Sidebar = ({
       transition={{ duration: 0.3 }}
       className="h-screen min-w-[4rem] max-w-[16rem] bg-sidebar-background border-r border-sidebar-border flex flex-col"
     >
-      {/* Header with Logo and Collapse Button */}
-      <div className="flex items-center px-4 py-4 gap-3">
+      {/* Header with Collapse Button and Logo */}
+      <div className="flex flex-col items-center py-4 gap-4">
+        {/* Collapse Button - Always Visible */}
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => setIsCollapsed(!isCollapsed)}
+          className="h-7 w-7 rounded-full border border-sidebar-border bg-sidebar-background hover:bg-sidebar-accent flex items-center justify-center p-0"
+        >
+          <PanelLeft
+            className={`h-4 w-4 transition-transform duration-200 ${
+              isCollapsed ? "rotate-180" : "rotate-0"
+            }`}
+          />
+        </Button>
+
         {/* Logo Icon with Animation */}
         <motion.div className="relative">
           <motion.div
@@ -58,20 +72,6 @@ export const Sidebar = ({
         {!isCollapsed && (
           <h1 className="text-2xl font-bold text-foreground">Deta</h1>
         )}
-
-        {/* Collapse Button next to logo */}
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => setIsCollapsed(!isCollapsed)}
-          className="h-7 w-7 rounded-full border border-sidebar-border bg-sidebar-background hover:bg-sidebar-accent flex items-center justify-center p-0 ml-auto"
-        >
-          <PanelLeft
-            className={`h-4 w-4 transition-transform duration-200 ${
-              isCollapsed ? "rotate-180" : "rotate-0"
-            }`}
-          />
-        </Button>
       </div>
 
       {/* Navigation */}
