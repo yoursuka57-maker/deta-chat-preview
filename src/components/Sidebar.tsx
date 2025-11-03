@@ -35,11 +35,10 @@ export const Sidebar = ({
         width: isCollapsed ? "4rem" : "16rem",
       }}
       transition={{ duration: 0.3 }}
-      className="h-screen min-w-[4rem] max-w-[16rem] bg-sidebar-background border-r border-sidebar-border flex flex-col"
+      className="h-screen bg-sidebar-background border-r border-sidebar-border flex flex-col"
     >
-      {/* Header with Collapse Button and Logo */}
-      <div className="flex flex-col items-center py-4 gap-4">
-        {/* Collapse Button - Always Visible */}
+      {/* Collapse Button */}
+      <div className="flex justify-center py-4">
         <Button
           variant="ghost"
           size="icon"
@@ -52,8 +51,10 @@ export const Sidebar = ({
             }`}
           />
         </Button>
+      </div>
 
-        {/* Logo Icon with Animation */}
+      {/* Logo */}
+      <div className={`flex items-center ${isCollapsed ? "justify-center" : "px-4 gap-3"} py-2`}>
         <motion.div className="relative">
           <motion.div
             animate={{ scale: [1, 1.2, 1], opacity: [0.5, 0.8, 0.5] }}
@@ -67,66 +68,65 @@ export const Sidebar = ({
             <Sparkles className="h-8 w-8 text-primary relative z-10" />
           </motion.div>
         </motion.div>
-
-        {/* Logo Text */}
         {!isCollapsed && (
           <h1 className="text-2xl font-bold text-foreground">Deta</h1>
         )}
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 px-3 space-y-2 overflow-hidden flex flex-col">
+      <nav className="flex-1 px-2 space-y-2 overflow-hidden flex flex-col">
         <Button
           variant="ghost"
           onClick={onNewChat}
-          className={`w-full ${
-            isCollapsed ? "justify-center px-2" : "justify-start"
-          } gap-3 hover:bg-sidebar-accent hover:text-primary transition-smooth`}
+          className={`w-full ${isCollapsed ? "justify-center" : "justify-start"} gap-3 hover:bg-sidebar-accent hover:text-primary transition-smooth`}
           title="New Chat"
         >
           <MessageSquarePlus className="h-5 w-5" />
           {!isCollapsed && <span>New Chat</span>}
         </Button>
 
-        {!isCollapsed && (
-          <Button
-            variant="ghost"
-            className="w-full justify-start gap-3 hover:bg-sidebar-accent hover:text-primary transition-smooth"
-          >
-            <Library className="h-5 w-5" />
-            <span>Library</span>
-          </Button>
-        )}
+        <Button
+          variant="ghost"
+          className={`w-full ${isCollapsed ? "justify-center" : "justify-start"} gap-3 hover:bg-sidebar-accent hover:text-primary transition-smooth`}
+          title="Library"
+        >
+          <Library className="h-5 w-5" />
+          {!isCollapsed && <span>Library</span>}
+        </Button>
 
         {/* Chat History Section */}
-        {!isCollapsed ? (
-          <div className="flex-1 flex flex-col min-h-0 pt-4">
-            <div className="flex items-center gap-2 px-3 mb-2">
-              <History className="h-3.5 w-3.5 text-muted-foreground" />
+        <div className="flex-1 flex flex-col min-h-0 pt-4">
+          <div className={`flex items-center ${isCollapsed ? "justify-center" : "gap-2 px-3 mb-2"}`}>
+            <History className="h-4 w-4 text-muted-foreground" />
+            {!isCollapsed && (
               <h3 className="text-xs font-semibold text-muted-foreground">
                 Chat History
               </h3>
-            </div>
-            <div className="flex-1 overflow-y-auto">
-              <ConversationsList
-                onSelectConversation={onSelectConversation}
-                currentConversationId={currentConversationId}
-              />
-            </div>
+            )}
           </div>
-        ) : (
-          <div className="flex-1 flex items-center justify-center pt-8">
-            <History className="h-5 w-5 text-muted-foreground" />
+          <div className="flex-1 overflow-y-auto">
+            <ConversationsList
+              onSelectConversation={onSelectConversation}
+              currentConversationId={currentConversationId}
+            />
           </div>
-        )}
+        </div>
       </nav>
 
       {/* User Menu */}
-      {!isCollapsed && (
-        <div className="p-4">
+      <div className="p-4">
+        {!isCollapsed ? (
           <UserMenu navigate={navigate} />
-        </div>
-      )}
+        ) : (
+          <Button
+            variant="outline"
+            className="w-full text-xs px-2 py-1"
+            onClick={() => navigate("/login")}
+          >
+            🔐
+          </Button>
+        )}
+      </div>
     </motion.aside>
   );
 };
