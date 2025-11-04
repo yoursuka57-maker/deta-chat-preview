@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Chat from "./pages/Chat";
 import Auth from "./pages/Auth";
+import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -19,6 +20,7 @@ const App = () => (
           {/* Chat is the main window of the site */}
           <Route path="/" element={<Chat />} />
           <Route path="/auth" element={<Auth />} />
+          <Route path="/settings" element={<Settings />} />
           {/* Catch-all route for 404 */}
           <Route path="*" element={<NotFound />} />
         </Routes>

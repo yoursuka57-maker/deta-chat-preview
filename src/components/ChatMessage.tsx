@@ -3,6 +3,7 @@ import { Bot, User } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { MarkdownContent } from "./MarkdownContent";
 import { motion } from "framer-motion";
+import { useState, useEffect } from "react";
 
 interface Message {
   id: string;
@@ -20,6 +21,33 @@ interface ChatMessageProps {
 
 export const ChatMessage = ({ message, index = 0 }: ChatMessageProps) => {
   const isUser = message.role === "user";
+  const [displayedContent, setDisplayedContent] = useState("");
+  const [isTypingComplete, setIsTypingComplete] = useState(isUser);
+
+  useEffect(() => {
+    if (isUser) {
+      setDisplayedContent(message.content);
+      setIsTypingComplete(true);
+      return;
+    }
+
+    // Typing animation for assistant
+    let currentIndex = 0;
+    setDisplayedContent("");
+    setIsTypingComplete(false);
+
+    const typingInterval = setInterval(() => {
+      if (currentIndex < message.content.length) {
+        setDisplayedContent(message.content.slice(0, currentIndex + 1));
+        currentIndex++;
+      } else {
+        setIsTypingComplete(true);
+        clearInterval(typingInterval);
+      }
+    }, 15);
+
+    return () => clearInterval(typingInterval);
+  }, [message.content, isUser]);
 
   return (
     <motion.div
@@ -66,7 +94,18 @@ export const ChatMessage = ({ message, index = 0 }: ChatMessageProps) => {
           {isUser ? (
             <p className="whitespace-pre-wrap">{message.content}</p>
           ) : (
-            <MarkdownContent content={message.content} />
+            <>
+              <MarkdownContent content={displayedContent} />
+              {!isTypingComplete && (
+                <motion.span
+                  animate={{ opacity: [1, 0, 1] }}
+                  transition={{ duration: 0.8, repeat: Infinity }}
+                  className="inline-block ml-1 text-primary"
+                >
+                  ▊
+                </motion.span>
+              )}
+            </>
           )}
         </div>
         

@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { LogOut, Moon, Sun, Settings as SettingsIcon } from "lucide-react";
+import { LogOut, Settings as SettingsIcon } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -14,7 +14,6 @@ interface UserMenuProps {
 export const UserMenu = ({ navigate }: UserMenuProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [user, setUser] = useState<any>(null);
-  const [theme, setTheme] = useState<"dark" | "light">("dark");
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
@@ -36,11 +35,6 @@ export const UserMenu = ({ navigate }: UserMenuProps) => {
       toast.success("Signed out successfully");
       setIsOpen(false);
     }
-  };
-
-  const toggleTheme = () => {
-    setTheme(theme === "dark" ? "light" : "dark");
-    toast.info("Theme toggle coming soon!");
   };
 
   if (!user) {
@@ -93,26 +87,8 @@ export const UserMenu = ({ navigate }: UserMenuProps) => {
               <Button
                 variant="ghost"
                 className="w-full justify-start gap-3 hover:bg-sidebar-accent"
-                onClick={toggleTheme}
-              >
-                {theme === "dark" ? (
-                  <>
-                    <Sun className="h-5 w-5" />
-                    <span>Toggle Theme</span>
-                  </>
-                ) : (
-                  <>
-                    <Moon className="h-5 w-5" />
-                    <span>Toggle Theme</span>
-                  </>
-                )}
-              </Button>
-
-              <Button
-                variant="ghost"
-                className="w-full justify-start gap-3 hover:bg-sidebar-accent"
                 onClick={() => {
-                  toast.info("Settings coming soon!");
+                  navigate("/settings");
                   setIsOpen(false);
                 }}
               >

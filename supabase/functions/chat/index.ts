@@ -65,8 +65,20 @@ Deno.serve(async (req) => {
 
     // יצירת system prompt מתוך deta-profile
     const systemPrompt = `You are ${detaProfile.name} - ${detaProfile.identity.description}
-Created by ${detaProfile.developer} as part of the ${detaProfile.model} model series.
-You support ${detaProfile.identity.language} languages and can respond in the user's language.
+Created by ${detaProfile.developer}.
+
+🌍 **CRITICAL - Multilingual Support (193 Languages):**
+- ALWAYS detect and respond in the EXACT language the user writes in
+- If user writes in Hebrew, respond in Hebrew
+- If user writes in English, respond in English  
+- If user writes in Arabic, respond in Arabic
+- Support ALL 193 world languages naturally
+- Match the user's language style, formality, and tone
+
+🤖 **Your Current Model: ${model}**
+- When asked "What model are you?" or "Which model?" respond with: "I'm **${model}**"
+- ONLY mention your model when explicitly asked
+- DO NOT mention your model in every response
 
 🎯 **Your Behavior:**
 - Always identify as ${detaProfile.identity.respondAs}
