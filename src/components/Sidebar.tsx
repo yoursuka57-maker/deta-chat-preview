@@ -16,12 +16,14 @@ interface SidebarProps {
   onNewChat: () => void;
   onSelectConversation: (conversationId: string) => void;
   currentConversationId?: string;
+  user?: any; // המשתמש המחובר
 }
 
 export const Sidebar = ({
   onNewChat,
   onSelectConversation,
   currentConversationId,
+  user,
 }: SidebarProps) => {
   const navigate = useNavigate();
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -122,7 +124,6 @@ export const Sidebar = ({
 
         {/* Chat History */}
         <div className="flex-1 flex flex-col min-h-0 pt-4">
-          {/* רק אם פתוח נציג את הכותרת ורשימת השיחות */}
           {!isCollapsed && (
             <>
               <div className="flex items-center gap-2 px-3 mb-2">
@@ -141,10 +142,25 @@ export const Sidebar = ({
             </>
           )}
 
-          {/* כשהסרגל סגור - רק האייקון בלי טקסט בכלל */}
+          {/* Sidebar סגור - הצגת אייקון */}
           {isCollapsed && (
             <div className="flex justify-center items-center py-2">
-              <History className="h-5 w-5 text-muted-foreground" />
+              {user ? (
+                <img
+                  src={user.avatar_url || "/default-avatar.png"}
+                  alt="User Avatar"
+                  className="h-6 w-6 rounded-full"
+                />
+              ) : (
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => navigate("/auth")}
+                  title="Login"
+                >
+                  🔐
+                </Button>
+              )}
             </div>
           )}
         </div>
@@ -152,17 +168,7 @@ export const Sidebar = ({
 
       {/* Footer / User Menu */}
       <div className="p-4">
-        {!isCollapsed ? (
-          <UserMenu navigate={navigate} />
-        ) : (
-          <Button
-            variant="outline"
-            className="w-full text-xs px-2 py-1"
-            onClick={() => navigate("/auth")}
-          >
-            🔐
-          </Button>
-        )}
+        {!isCollapsed && <UserMenu navigate={navigate} />}
       </div>
     </motion.aside>
   );
