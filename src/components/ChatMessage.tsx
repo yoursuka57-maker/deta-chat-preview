@@ -12,6 +12,7 @@ interface Message {
   timestamp: Date;
   images?: string[];
   isTyping?: boolean;
+  sources?: Array<{ title: string; link: string; snippet: string }>;
 }
 
 interface ChatMessageProps {
@@ -127,6 +128,34 @@ export const ChatMessage = ({ message, index = 0 }: ChatMessageProps) => {
                 className="rounded-xl max-w-full border border-primary/30 shadow-glow"
               />
             ))}
+          </motion.div>
+        )}
+
+        {message.sources && message.sources.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, delay: 0.3 }}
+            className="mt-4 pt-4 border-t border-primary/20"
+          >
+            <p className="text-xs font-semibold text-primary mb-2">📚 Sources:</p>
+            <div className="space-y-2">
+              {message.sources.map((source, idx) => (
+                <motion.a
+                  key={idx}
+                  href={source.link}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ duration: 0.3, delay: idx * 0.1 }}
+                  className="block p-2 rounded-lg bg-card/40 border border-primary/20 hover:border-primary/40 transition-smooth hover:bg-card/60"
+                >
+                  <p className="text-xs font-medium text-primary truncate">{source.title}</p>
+                  <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{source.snippet}</p>
+                </motion.a>
+              ))}
+            </div>
           </motion.div>
         )}
         

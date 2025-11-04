@@ -25,6 +25,7 @@ interface Message {
   timestamp: Date;
   images?: string[];
   isTyping?: boolean;
+  sources?: Array<{ title: string; link: string; snippet: string }>;
 }
 
 export const Chat = () => {
@@ -188,6 +189,7 @@ export const Chat = () => {
 
     let assistantContent = "";
     const assistantImages: string[] = [];
+    let assistantSources: Array<{ title: string; link: string; snippet: string }> = [];
     
     const upsertAssistant = (chunk: string) => {
       assistantContent += chunk;
@@ -195,7 +197,7 @@ export const Chat = () => {
         const last = prev[prev.length - 1];
         if (last?.role === "assistant") {
           return prev.map((m, i) =>
-            i === prev.length - 1 ? { ...m, content: assistantContent, images: assistantImages } : m
+            i === prev.length - 1 ? { ...m, content: assistantContent, images: assistantImages, sources: assistantSources } : m
           );
         }
         return [
@@ -206,6 +208,7 @@ export const Chat = () => {
             content: assistantContent,
             timestamp: new Date(),
             images: assistantImages,
+            sources: assistantSources,
           },
         ];
       });
@@ -231,6 +234,18 @@ export const Chat = () => {
             return prev;
           });
         },
+        onSources: (sources) => {
+          assistantSources = sources;
+          setMessages((prev) => {
+            const last = prev[prev.length - 1];
+            if (last?.role === "assistant") {
+              return prev.map((m, i) =>
+                i === prev.length - 1 ? { ...m, sources: sources } : m
+              );
+            }
+            return prev;
+          });
+        },
         onDone: async () => {
           setIsLoading(false);
           // Save assistant message
@@ -240,6 +255,7 @@ export const Chat = () => {
             content: assistantContent,
             timestamp: new Date(),
             images: assistantImages.length > 0 ? assistantImages : undefined,
+            sources: assistantSources.length > 0 ? assistantSources : undefined,
           };
           await saveMessage(assistantMessage);
         },

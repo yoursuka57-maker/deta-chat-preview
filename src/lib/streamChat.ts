@@ -6,6 +6,7 @@ export async function streamChat({
   generateImage = false,
   onDelta,
   onImage,
+  onSources,
   onDone,
   onError,
 }: {
@@ -14,6 +15,7 @@ export async function streamChat({
   generateImage?: boolean;
   onDelta: (deltaText: string) => void;
   onImage?: (imageUrl: string) => void;
+  onSources?: (sources: Array<{ title: string; link: string; snippet: string }>) => void;
   onDone: () => void;
   onError?: (error: string) => void;
 }) {
@@ -67,6 +69,13 @@ export async function streamChat({
 
         try {
           const parsed = JSON.parse(jsonStr);
+          
+          // Check for sources
+          if (parsed.sources && onSources) {
+            onSources(parsed.sources);
+            continue;
+          }
+          
           const content = parsed.choices?.[0]?.delta?.content as string | undefined;
           if (content) onDelta(content);
           
@@ -96,6 +105,13 @@ export async function streamChat({
         if (jsonStr === "[DONE]") continue;
         try {
           const parsed = JSON.parse(jsonStr);
+          
+          // Check for sources
+          if (parsed.sources && onSources) {
+            onSources(parsed.sources);
+            continue;
+          }
+          
           const content = parsed.choices?.[0]?.delta?.content as string | undefined;
           if (content) onDelta(content);
           

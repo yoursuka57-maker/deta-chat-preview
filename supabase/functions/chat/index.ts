@@ -46,9 +46,38 @@ Deno.serve(async (req) => {
   try {
     const { messages, model = "LPT-3.5", generateImage = false } = await req.json();
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+    const GOOGLE_SEARCH_API_KEY = Deno.env.get("GOOGLE_SEARCH_API_KEY");
+    const GOOGLE_SEARCH_ENGINE_ID = Deno.env.get("GOOGLE_SEARCH_ENGINE_ID");
     
     if (!LOVABLE_API_KEY) {
       throw new Error("LOVABLE_API_KEY is not configured");
+    }
+
+    // Google Search function
+    async function searchGoogle(query: string) {
+      if (!GOOGLE_SEARCH_API_KEY || !GOOGLE_SEARCH_ENGINE_ID) {
+        return { error: "Google Search not configured" };
+      }
+
+      try {
+        const url = `https://www.googleapis.com/customsearch/v1?key=${GOOGLE_SEARCH_API_KEY}&cx=${GOOGLE_SEARCH_ENGINE_ID}&q=${encodeURIComponent(query)}`;
+        const response = await fetch(url);
+        const data = await response.json();
+
+        if (data.items) {
+          return {
+            results: data.items.slice(0, 5).map((item: any) => ({
+              title: item.title,
+              link: item.link,
+              snippet: item.snippet,
+            })),
+          };
+        }
+        return { results: [] };
+      } catch (error) {
+        console.error("Google Search error:", error);
+        return { error: "Failed to search" };
+      }
     }
 
     // Map LPT models to actual models
@@ -121,7 +150,34 @@ ${detaProfile.instructions.responses.liskasYR}
 - If the user requests "create an image", "image of", or "show me a picture", explain that you're generating the image
 - The image will be automatically created by the system
 
+🔍 **Search Capability:**
+- You have access to Google Search to find current information
+- When users ask about recent events, current facts, or specific information you don't know, use the search_google tool
+- ALWAYS provide sources at the end when using search results
+- Format sources as: **Sources:** [Title](URL)
+
 Always maintain these standards in your responses! 🚀`;
+
+    // Add search tool
+    const tools = [
+      {
+        type: "function",
+        function: {
+          name: "search_google",
+          description: "Search Google for current information, recent events, or specific facts. Use this when users ask about things happening now, recent news, or information you don't have.",
+          parameters: {
+            type: "object",
+            properties: {
+              query: {
+                type: "string",
+                description: "The search query to find information",
+              },
+            },
+            required: ["query"],
+          },
+        },
+      },
+    ];
 
     const requestBody: any = {
       model: actualModel,
@@ -133,10 +189,60 @@ Always maintain these standards in your responses! 🚀`;
         ...messages,
       ],
       stream: true,
+      tools: tools,
     };
 
     if (generateImage) {
       requestBody.modalities = ["image", "text"];
+    }
+
+    // Handle tool calls
+    let finalMessages = [...messages];
+    let toolCallsNeeded = true;
+    let searchSources: any[] = [];
+
+    while (toolCallsNeeded) {
+      const tempResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${LOVABLE_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          ...requestBody,
+          messages: [{ role: "system", content: systemPrompt }, ...finalMessages],
+          stream: false,
+        }),
+      });
+
+      const tempData = await tempResponse.json();
+      const choice = tempData.choices?.[0];
+      
+      if (choice?.message?.tool_calls && choice.message.tool_calls.length > 0) {
+        // Add assistant message with tool calls
+        finalMessages.push(choice.message);
+
+        // Execute tool calls
+        for (const toolCall of choice.message.tool_calls) {
+          if (toolCall.function.name === "search_google") {
+            const args = JSON.parse(toolCall.function.arguments);
+            const searchResults = await searchGoogle(args.query);
+            
+            // Store sources for later
+            if (searchResults.results) {
+              searchSources = searchResults.results;
+            }
+            
+            finalMessages.push({
+              role: "tool",
+              tool_call_id: toolCall.id,
+              content: JSON.stringify(searchResults),
+            });
+          }
+        }
+      } else {
+        toolCallsNeeded = false;
+      }
     }
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
@@ -145,7 +251,10 @@ Always maintain these standards in your responses! 🚀`;
         Authorization: `Bearer ${LOVABLE_API_KEY}`,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify(requestBody),
+      body: JSON.stringify({
+        ...requestBody,
+        messages: [{ role: "system", content: systemPrompt }, ...finalMessages],
+      }),
     });
 
     if (!response.ok) {
@@ -178,7 +287,41 @@ Always maintain these standards in your responses! 🚀`;
       );
     }
 
-    return new Response(response.body, {
+    // Create a custom stream that includes sources
+    const reader = response.body?.getReader();
+    if (!reader) {
+      return new Response(
+        JSON.stringify({ error: "No response body" }), 
+        {
+          status: 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
+      );
+    }
+
+    const customStream = new ReadableStream({
+      async start(controller) {
+        // First, send sources if available
+        if (searchSources.length > 0) {
+          const sourcesData = JSON.stringify({ sources: searchSources });
+          controller.enqueue(new TextEncoder().encode(`data: ${sourcesData}\n\n`));
+        }
+
+        // Then pipe through the original stream
+        try {
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            controller.enqueue(value);
+          }
+          controller.close();
+        } catch (error) {
+          controller.error(error);
+        }
+      },
+    });
+
+    return new Response(customStream, {
       headers: { ...corsHeaders, "Content-Type": "text/event-stream" },
     });
   } catch (e) {
