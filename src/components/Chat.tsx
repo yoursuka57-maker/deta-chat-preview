@@ -247,17 +247,17 @@ export const Chat = () => {
   const isEmpty = messages.length === 0;
 
   return (
-    <div className="flex h-screen bg-gray-900"> {/* רקע סטטי כהה */}
+    <div className="flex h-screen bg-gradient-to-br from-black via-purple-900 to-black">
       <Sidebar onNewChat={createNewConversation} onSelectConversation={loadConversation} currentConversationId={currentConversationId || undefined} />
 
       <div className="flex-1 flex flex-col">
         {/* Header */}
         <motion.header initial={{ y: -50, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ duration: 0.5 }} className="glass border-b border-border/50 px-6 py-4">
           <div className="flex items-center justify-between max-w-5xl mx-auto">
-            <motion.div animate={{ scale: [1, 1.05, 1] }} transition={{ duration: 2, repeat: Infinity }} className="flex items-center gap-2">
+            <motion.div className="flex items-center gap-2">
               <Zap className="h-5 w-5 text-primary" />
               <Select value={selectedModel} onValueChange={setSelectedModel}>
-                <SelectTrigger className="w-[140px] bg-card/50"> {/* בלי glow */}
+                <SelectTrigger className="w-[140px] bg-card/50">
                   <SelectValue placeholder="Model" />
                 </SelectTrigger>
                 <SelectContent>
