@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Send, Sparkles, Paperclip, Mic, X } from "lucide-react";
+import { Zap, Send, Sparkles, Paperclip, Mic, X } from "lucide-react";
 import { ChatMessage } from "./ChatMessage";
 import { streamChat } from "@/lib/streamChat";
 import { toast } from "sonner";
@@ -303,7 +303,7 @@ export const Chat = () => {
               transition={{ duration: 2, repeat: Infinity }}
               className="flex items-center gap-2"
             >
-              <Sparkles className="h-5 w-5 text-primary" />
+              <Zap className="h-5 w-5 text-primary" />
               <Select value={selectedModel} onValueChange={setSelectedModel}>
                 <SelectTrigger className="w-[140px] glow-border bg-card/50">
                   <SelectValue placeholder="Model" />
@@ -347,7 +347,7 @@ export const Chat = () => {
                     transition={{ duration: 4, repeat: Infinity }}
                     className="mb-8"
                   >
-                    <Sparkles className="h-20 w-20 text-primary shadow-neon" />
+                    <Zap className="h-20 w-20 text-primary shadow-neon" />
                   </motion.div>
                   
                   <motion.h1
