@@ -37,11 +37,11 @@ export const Chat = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [selectedModel, setSelectedModel] = useState("LPT-3.5");
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
+
   const scrollRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    // Check auth
     supabase.auth.getUser().then(({ data: { user } }) => {
       setUser(user);
       if (user) {
@@ -57,7 +57,6 @@ export const Chat = () => {
     });
 
     return () => subscription.unsubscribe();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [navigate]);
 
   useEffect(() => {
@@ -68,19 +67,12 @@ export const Chat = () => {
 
   const createNewConversation = async () => {
     if (!user) return;
-
     try {
       const { data, error } = await supabase
         .from("conversations")
-        .insert([
-          {
-            user_id: user.id,
-            title: "New Conversation",
-          },
-        ])
+        .insert([{ user_id: user.id, title: "New Conversation" }])
         .select()
         .single();
-
       if (error) throw error;
       setCurrentConversationId(data.id);
       setMessages([]);
@@ -96,10 +88,9 @@ export const Chat = () => {
         .select("*")
         .eq("conversation_id", conversationId)
         .order("created_at", { ascending: true });
-
       if (error) throw error;
 
-      const loadedMessages: Message[] = data.map((msg: any) => ({
+      const loadedMessages: Message[] = data.map((msg) => ({
         id: msg.id,
         role: msg.role as "user" | "assistant",
         content: msg.content,
@@ -116,7 +107,6 @@ export const Chat = () => {
 
   const saveMessage = async (message: Message) => {
     if (!currentConversationId) return;
-
     try {
       await supabase.from("messages").insert([
         {
@@ -127,13 +117,9 @@ export const Chat = () => {
         },
       ]);
 
-      // Update conversation title if it's the first user message
       if (message.role === "user" && messages.length === 0) {
         const title = message.content.slice(0, 50);
-        await supabase
-          .from("conversations")
-          .update({ title })
-          .eq("id", currentConversationId);
+        await supabase.from("conversations").update({ title }).eq("id", currentConversationId);
       }
     } catch (error: any) {
       console.error("Failed to save message:", error);
@@ -147,17 +133,10 @@ export const Chat = () => {
     try {
       const fileExt = file.name.split(".").pop();
       const fileName = `${user.id}/${Date.now()}.${fileExt}`;
-
-      const { error: uploadError } = await supabase.storage
-        .from("chat-images")
-        .upload(fileName, file);
-
+      const { error: uploadError } = await supabase.storage.from("chat-images").upload(fileName, file);
       if (uploadError) throw uploadError;
 
-      const { data } = supabase.storage
-        .from("chat-images")
-        .getPublicUrl(fileName);
-
+      const { data } = supabase.storage.from("chat-images").getPublicUrl(fileName);
       setUploadedImage(data.publicUrl);
       toast.success("Image uploaded!");
     } catch (error: any) {
@@ -184,7 +163,6 @@ export const Chat = () => {
     setUploadedImage(null);
     setIsLoading(true);
 
-    // Detect if user wants to generate an image
     const imageKeywords = ["צור תמונה", "תמונה של", "הראה לי תמונה", "generate image", "create image"];
     const generateImage = imageKeywords.some((keyword) => currentInput.includes(keyword));
 
@@ -203,23 +181,14 @@ export const Chat = () => {
         }
         return [
           ...prev,
-          {
-            id: Date.now().toString(),
-            role: "assistant",
-            content: assistantContent,
-            timestamp: new Date(),
-            images: assistantImages,
-            sources: assistantSources,
-          },
+          { id: Date.now().toString(), role: "assistant", content: assistantContent, timestamp: new Date(), images: assistantImages, sources: assistantSources },
         ];
       });
     };
 
     try {
       await streamChat({
-        messages: messages
-          .concat(userMessage)
-          .map((m) => ({ role: m.role, content: m.content })),
+        messages: messages.concat(userMessage).map((m) => ({ role: m.role, content: m.content })),
         model: selectedModel,
         generateImage,
         onDelta: (chunk) => upsertAssistant(chunk),
@@ -228,9 +197,7 @@ export const Chat = () => {
           setMessages((prev) => {
             const last = prev[prev.length - 1];
             if (last?.role === "assistant") {
-              return prev.map((m, i) =>
-                i === prev.length - 1 ? { ...m, images: [...assistantImages] } : m
-              );
+              return prev.map((m, i) => (i === prev.length - 1 ? { ...m, images: [...assistantImages] } : m));
             }
             return prev;
           });
@@ -240,16 +207,13 @@ export const Chat = () => {
           setMessages((prev) => {
             const last = prev[prev.length - 1];
             if (last?.role === "assistant") {
-              return prev.map((m, i) =>
-                i === prev.length - 1 ? { ...m, sources: sources } : m
-              );
+              return prev.map((m, i) => (i === prev.length - 1 ? { ...m, sources } : m));
             }
             return prev;
           });
         },
         onDone: async () => {
           setIsLoading(false);
-          // Save assistant message
           const assistantMessage: Message = {
             id: Date.now().toString(),
             role: "assistant",
@@ -283,30 +247,17 @@ export const Chat = () => {
   const isEmpty = messages.length === 0;
 
   return (
-    <div className="flex h-screen bg-background gradient-cosmic">
-      <Sidebar
-        onNewChat={createNewConversation}
-        onSelectConversation={loadConversation}
-        currentConversationId={currentConversationId || undefined}
-      />
+    <div className="flex h-screen bg-gray-900"> {/* רקע סטטי כהה */}
+      <Sidebar onNewChat={createNewConversation} onSelectConversation={loadConversation} currentConversationId={currentConversationId || undefined} />
 
       <div className="flex-1 flex flex-col">
         {/* Header */}
-        <motion.header
-          initial={{ y: -50, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ duration: 0.5 }}
-          className="glass border-b border-border/50 px-6 py-4"
-        >
+        <motion.header initial={{ y: -50, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ duration: 0.5 }} className="glass border-b border-border/50 px-6 py-4">
           <div className="flex items-center justify-between max-w-5xl mx-auto">
-            <motion.div
-              animate={{ scale: [1, 1.05, 1] }}
-              transition={{ duration: 2, repeat: Infinity }}
-              className="flex items-center gap-2"
-            >
+            <motion.div animate={{ scale: [1, 1.05, 1] }} transition={{ duration: 2, repeat: Infinity }} className="flex items-center gap-2">
               <Zap className="h-5 w-5 text-primary" />
               <Select value={selectedModel} onValueChange={setSelectedModel}>
-                <SelectTrigger className="w-[140px] glow-border bg-card/50">
+                <SelectTrigger className="w-[140px] bg-card/50"> {/* בלי glow */}
                   <SelectValue placeholder="Model" />
                 </SelectTrigger>
                 <SelectContent>
@@ -319,210 +270,67 @@ export const Chat = () => {
                 </SelectContent>
               </Select>
             </motion.div>
-
-            <motion.div
-              animate={{ opacity: [0.5, 1, 0.5] }}
-              transition={{ duration: 3, repeat: Infinity }}
-              className="h-2 w-2 rounded-full bg-primary shadow-neon"
-            />
+            <div className="h-2 w-2 rounded-full bg-primary" /> {/* סטטי */}
           </div>
         </motion.header>
 
-        {/* Messages Area with RGB animated background (purple-black) */}
+        {/* Messages Area */}
         <ScrollArea className="flex-1 px-4">
           <div className="mx-auto max-w-4xl py-8">
-            {/* wrapper with animated purple-black gradient background */}
-            <div className="relative rounded-2xl p-6">
-              <div className="rgb-messages absolute inset-0 rounded-2xl pointer-events-none" />
-              <div className="relative z-10">
-                <AnimatePresence mode="popLayout">
-                  {isEmpty ? (
-                    <motion.div
-                      key="welcome"
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -20 }}
-                      className="flex flex-col items-center justify-center min-h-[60vh] text-center"
-                    >
-                      <motion.div
-                        animate={{
-                          scale: [1, 1.1, 1],
-                          rotate: [0, 5, -5, 0]
-                        }}
-                        transition={{ duration: 4, repeat: Infinity }}
-                        className="mb-8"
-                      >
-                        <Sparkles className="h-20 w-20 text-primary shadow-neon" />
-                      </motion.div>
+            <AnimatePresence mode="popLayout">
+              {isEmpty ? (
+                <div className="flex flex-col items-center justify-center min-h-[60vh] text-center">
+                  <Sparkles className="h-20 w-20 text-primary" />
+                  <h1 className="text-5xl font-bold mb-4 text-white">Where should we begin?</h1>
+                  <p className="text-muted-foreground max-w-xl">Powered by LiskCell's LPT Engine - Advanced AI for creative, intelligent conversations</p>
+                </div>
+              ) : (
+                <div className="space-y-6">
+                  {messages.map((message, index) => (
+                    <ChatMessage key={message.id} message={message} index={index} />
+                  ))}
+                </div>
+              )}
+            </AnimatePresence>
 
-                      <motion.h1
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.2 }}
-                        className="text-5xl font-bold mb-4 bg-gradient-to-r from-primary via-primary-glow to-secondary bg-clip-text text-transparent"
-                      >
-                        Where should we begin?
-                      </motion.h1>
-
-                      <motion.p
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        transition={{ delay: 0.4 }}
-                        className="text-muted-foreground max-w-xl"
-                      >
-                        Powered by LiskCell's LPT Engine - Advanced AI for creative, intelligent conversations
-                      </motion.p>
-                    </motion.div>
-                  ) : (
-                    <div className="space-y-6">
-                      {messages.map((message, index) => (
-                        <ChatMessage key={message.id} message={message} index={index} />
-                      ))}
-                    </div>
-                  )}
-                </AnimatePresence>
-
-                {isLoading && (
-                  <motion.div
-                    initial={{ opacity: 0, scale: 0.8 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    className="flex items-center gap-3 text-muted-foreground p-4"
-                  >
-                    <motion.div
-                      animate={{ scale: [1, 1.2, 1], opacity: [0.5, 1, 0.5] }}
-                      transition={{ duration: 1.5, repeat: Infinity }}
-                      className="h-3 w-3 rounded-full bg-primary shadow-neon"
-                    />
-                    <span className="text-sm">Deta Response...</span>
-                  </motion.div>
-                )}
-                <div ref={scrollRef} />
+            {isLoading && (
+              <div className="flex items-center gap-3 text-muted-foreground p-4">
+                <div className="h-3 w-3 rounded-full bg-primary animate-pulse" />
+                <span className="text-sm">Deta Response...</span>
               </div>
-            </div>
+            )}
+            <div ref={scrollRef} />
           </div>
         </ScrollArea>
 
         {/* Input Area */}
-        <motion.div
-          initial={{ y: 50, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ duration: 0.5 }}
-          className="glass border-t border-border/50 px-4 py-6"
-        >
+        <div className="glass border-t border-border/50 px-4 py-6">
           <div className="mx-auto max-w-4xl">
             {uploadedImage && (
               <div className="mb-3 relative inline-block">
-                <img
-                  src={uploadedImage}
-                  alt="Upload preview"
-                  className="h-20 w-20 object-cover rounded-xl glass glow-border"
-                />
-                <Button
-                  size="icon"
-                  variant="ghost"
-                  onClick={() => setUploadedImage(null)}
-                  className="absolute -top-2 -right-2 h-6 w-6 rounded-full bg-destructive hover:bg-destructive/80"
-                >
+                <img src={uploadedImage} alt="Upload preview" className="h-20 w-20 object-cover rounded-xl glass" />
+                <Button size="icon" variant="ghost" onClick={() => setUploadedImage(null)} className="absolute -top-2 -right-2 h-6 w-6 rounded-full bg-destructive">
                   <X className="h-3 w-3" />
                 </Button>
               </div>
             )}
-
-            <div className="relative flex items-center gap-3 p-3 rounded-2xl glass glow-border shadow-neon">
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*"
-                onChange={handleImageUpload}
-                className="hidden"
-              />
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => fileInputRef.current?.click()}
-                className="hover:bg-primary/20 hover:text-primary transition-smooth"
-                title="Upload files (images, documents, etc.)"
-              >
+            <div className="relative flex items-center gap-3 p-3 rounded-2xl glass">
+              <input ref={fileInputRef} type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
+              <Button variant="ghost" size="icon" onClick={() => fileInputRef.current?.click()} title="Upload files">
                 <Paperclip className="h-5 w-5" />
               </Button>
-
-              <Input
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onKeyPress={handleKeyPress}
-                placeholder="Ask anything"
-                className="flex-1 bg-transparent border-0 focus-visible:ring-0 focus-visible:ring-offset-0"
-                disabled={isLoading}
-              />
-
-              <Button
-                variant="ghost"
-                size="icon"
-                className="hover:bg-primary/20 hover:text-primary transition-smooth"
-                disabled
-                title="Voice input coming soon"
-              >
+              <Input value={input} onChange={(e) => setInput(e.target.value)} onKeyPress={handleKeyPress} placeholder="Ask anything" className="flex-1 bg-transparent border-0 focus-visible:ring-0 focus-visible:ring-offset-0" disabled={isLoading} />
+              <Button variant="ghost" size="icon" disabled title="Voice input coming soon">
                 <Mic className="h-5 w-5" />
               </Button>
-
-              <motion.div
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-              >
-                <Button
-                  onClick={handleSend}
-                  disabled={(!input.trim() && !uploadedImage) || isLoading}
-                  size="icon"
-                  className="gradient-primary shadow-neon transition-smooth hover:shadow-glow"
-                >
-                  <Send className="h-4 w-4" />
-                </Button>
-              </motion.div>
+              <Button onClick={handleSend} disabled={(!input.trim() && !uploadedImage) || isLoading} size="icon">
+                <Send className="h-4 w-4" />
+              </Button>
             </div>
-
-            <p className="mt-3 text-center text-xs text-muted-foreground">
-              Deta · Powered by LiskCell · LPT Engine
-            </p>
+            <p className="mt-3 text-center text-xs text-muted-foreground">Deta · Powered by LiskCell · LPT Engine</p>
           </div>
-        </motion.div>
+        </div>
       </div>
-
-      {/* Styles for the purple-black animated gradient used behind the messages area */}
-      <style>{`
-        @keyframes purpleBlackFlow {
-          0% { background-position: 0% 50%; }
-          50% { background-position: 100% 50%; }
-          100% { background-position: 0% 50%; }
-        }
-
-        .rgb-messages {
-          /* gradient between black and purple shades */
-          background: linear-gradient(270deg, #000000 0%, #1b002b 30%, #6a00ff 60%, #000000 100%);
-          background-size: 300% 300%;
-          animation: purpleBlackFlow 6s ease-in-out infinite alternate;
-          opacity: 0.22;
-          filter: blur(18px);
-          transform: translateZ(0);
-        }
-
-        /* make sure the overlay doesn't cover interactive elements but gives subtle glow */
-        .rgb-messages::after {
-          content: "";
-          position: absolute;
-          inset: 0;
-          border-radius: inherit;
-          box-shadow: 0 8px 40px rgba(106,0,255,0.14), inset 0 0 30px rgba(106,0,255,0.06);
-          pointer-events: none;
-        }
-
-        /* adjust for dark inner card so text stays readable */
-        .relative.z-10 { color: inherit; }
-
-        /* optional: tune for smaller screens */
-        @media (max-width: 768px) {
-          .rgb-messages { filter: blur(10px); opacity: 0.18; }
-        }
-      `}</style>
     </div>
   );
 };
