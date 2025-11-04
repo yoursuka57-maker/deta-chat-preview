@@ -347,7 +347,7 @@ export const Chat = () => {
                     transition={{ duration: 4, repeat: Infinity }}
                     className="mb-8"
                   >
-                    <Zap className="h-20 w-20 text-primary shadow-neon" />
+                    <Sparkles className="h-20 w-20 text-primary shadow-neon" />
                   </motion.div>
                   
                   <motion.h1
