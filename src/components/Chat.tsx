@@ -57,6 +57,7 @@ export const Chat = () => {
     });
 
     return () => subscription.unsubscribe();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [navigate]);
 
   useEffect(() => {
@@ -98,7 +99,7 @@ export const Chat = () => {
 
       if (error) throw error;
 
-      const loadedMessages: Message[] = data.map((msg) => ({
+      const loadedMessages: Message[] = data.map((msg: any) => ({
         id: msg.id,
         role: msg.role as "user" | "assistant",
         content: msg.content,
@@ -185,12 +186,12 @@ export const Chat = () => {
 
     // Detect if user wants to generate an image
     const imageKeywords = ["צור תמונה", "תמונה של", "הראה לי תמונה", "generate image", "create image"];
-    const generateImage = imageKeywords.some(keyword => currentInput.includes(keyword));
+    const generateImage = imageKeywords.some((keyword) => currentInput.includes(keyword));
 
     let assistantContent = "";
     const assistantImages: string[] = [];
     let assistantSources: Array<{ title: string; link: string; snippet: string }> = [];
-    
+
     const upsertAssistant = (chunk: string) => {
       assistantContent += chunk;
       setMessages((prev) => {
@@ -283,12 +284,12 @@ export const Chat = () => {
 
   return (
     <div className="flex h-screen bg-background gradient-cosmic">
-      <Sidebar 
+      <Sidebar
         onNewChat={createNewConversation}
         onSelectConversation={loadConversation}
         currentConversationId={currentConversationId || undefined}
       />
-      
+
       <div className="flex-1 flex flex-col">
         {/* Header */}
         <motion.header
@@ -318,7 +319,7 @@ export const Chat = () => {
                 </SelectContent>
               </Select>
             </motion.div>
-            
+
             <motion.div
               animate={{ opacity: [0.5, 1, 0.5] }}
               transition={{ duration: 3, repeat: Infinity }}
@@ -327,71 +328,77 @@ export const Chat = () => {
           </div>
         </motion.header>
 
-        {/* Messages Area */}
+        {/* Messages Area with RGB animated background (purple-black) */}
         <ScrollArea className="flex-1 px-4">
           <div className="mx-auto max-w-4xl py-8">
-            <AnimatePresence mode="popLayout">
-              {isEmpty ? (
-                <motion.div
-                  key="welcome"
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -20 }}
-                  className="flex flex-col items-center justify-center min-h-[60vh] text-center"
-                >
+            {/* wrapper with animated purple-black gradient background */}
+            <div className="relative rounded-2xl p-6">
+              <div className="rgb-messages absolute inset-0 rounded-2xl pointer-events-none" />
+              <div className="relative z-10">
+                <AnimatePresence mode="popLayout">
+                  {isEmpty ? (
+                    <motion.div
+                      key="welcome"
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -20 }}
+                      className="flex flex-col items-center justify-center min-h-[60vh] text-center"
+                    >
+                      <motion.div
+                        animate={{
+                          scale: [1, 1.1, 1],
+                          rotate: [0, 5, -5, 0]
+                        }}
+                        transition={{ duration: 4, repeat: Infinity }}
+                        className="mb-8"
+                      >
+                        <Sparkles className="h-20 w-20 text-primary shadow-neon" />
+                      </motion.div>
+
+                      <motion.h1
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.2 }}
+                        className="text-5xl font-bold mb-4 bg-gradient-to-r from-primary via-primary-glow to-secondary bg-clip-text text-transparent"
+                      >
+                        Where should we begin?
+                      </motion.h1>
+
+                      <motion.p
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ delay: 0.4 }}
+                        className="text-muted-foreground max-w-xl"
+                      >
+                        Powered by LiskCell's LPT Engine - Advanced AI for creative, intelligent conversations
+                      </motion.p>
+                    </motion.div>
+                  ) : (
+                    <div className="space-y-6">
+                      {messages.map((message, index) => (
+                        <ChatMessage key={message.id} message={message} index={index} />
+                      ))}
+                    </div>
+                  )}
+                </AnimatePresence>
+
+                {isLoading && (
                   <motion.div
-                    animate={{ 
-                      scale: [1, 1.1, 1],
-                      rotate: [0, 5, -5, 0]
-                    }}
-                    transition={{ duration: 4, repeat: Infinity }}
-                    className="mb-8"
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    className="flex items-center gap-3 text-muted-foreground p-4"
                   >
-                    <Sparkles className="h-20 w-20 text-primary shadow-neon" />
+                    <motion.div
+                      animate={{ scale: [1, 1.2, 1], opacity: [0.5, 1, 0.5] }}
+                      transition={{ duration: 1.5, repeat: Infinity }}
+                      className="h-3 w-3 rounded-full bg-primary shadow-neon"
+                    />
+                    <span className="text-sm">Deta Response...</span>
                   </motion.div>
-                  
-                  <motion.h1
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.2 }}
-                    className="text-5xl font-bold mb-4 bg-gradient-to-r from-primary via-primary-glow to-secondary bg-clip-text text-transparent"
-                  >
-                    Where should we begin?
-                  </motion.h1>
-                  
-                  <motion.p
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: 0.4 }}
-                    className="text-muted-foreground max-w-xl"
-                  >
-                    Powered by LiskCell's LPT Engine - Advanced AI for creative, intelligent conversations
-                  </motion.p>
-                </motion.div>
-              ) : (
-                <div className="space-y-6">
-                  {messages.map((message, index) => (
-                    <ChatMessage key={message.id} message={message} index={index} />
-                  ))}
-                </div>
-              )}
-            </AnimatePresence>
-            
-            {isLoading && (
-              <motion.div
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                className="flex items-center gap-3 text-muted-foreground p-4"
-              >
-                <motion.div
-                  animate={{ scale: [1, 1.2, 1], opacity: [0.5, 1, 0.5] }}
-                  transition={{ duration: 1.5, repeat: Infinity }}
-                  className="h-3 w-3 rounded-full bg-primary shadow-neon"
-                />
-                <span className="text-sm">Deta Response...</span>
-              </motion.div>
-            )}
-            <div ref={scrollRef} />
+                )}
+                <div ref={scrollRef} />
+              </div>
+            </div>
           </div>
         </ScrollArea>
 
@@ -420,7 +427,7 @@ export const Chat = () => {
                 </Button>
               </div>
             )}
-            
+
             <div className="relative flex items-center gap-3 p-3 rounded-2xl glass glow-border shadow-neon">
               <input
                 ref={fileInputRef}
@@ -438,7 +445,7 @@ export const Chat = () => {
               >
                 <Paperclip className="h-5 w-5" />
               </Button>
-              
+
               <Input
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
@@ -447,7 +454,7 @@ export const Chat = () => {
                 className="flex-1 bg-transparent border-0 focus-visible:ring-0 focus-visible:ring-offset-0"
                 disabled={isLoading}
               />
-              
+
               <Button
                 variant="ghost"
                 size="icon"
@@ -457,7 +464,7 @@ export const Chat = () => {
               >
                 <Mic className="h-5 w-5" />
               </Button>
-              
+
               <motion.div
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
@@ -472,13 +479,50 @@ export const Chat = () => {
                 </Button>
               </motion.div>
             </div>
-            
+
             <p className="mt-3 text-center text-xs text-muted-foreground">
               Deta · Powered by LiskCell · LPT Engine
             </p>
           </div>
         </motion.div>
       </div>
+
+      {/* Styles for the purple-black animated gradient used behind the messages area */}
+      <style>{`
+        @keyframes purpleBlackFlow {
+          0% { background-position: 0% 50%; }
+          50% { background-position: 100% 50%; }
+          100% { background-position: 0% 50%; }
+        }
+
+        .rgb-messages {
+          /* gradient between black and purple shades */
+          background: linear-gradient(270deg, #000000 0%, #1b002b 30%, #6a00ff 60%, #000000 100%);
+          background-size: 300% 300%;
+          animation: purpleBlackFlow 6s ease-in-out infinite alternate;
+          opacity: 0.22;
+          filter: blur(18px);
+          transform: translateZ(0);
+        }
+
+        /* make sure the overlay doesn't cover interactive elements but gives subtle glow */
+        .rgb-messages::after {
+          content: "";
+          position: absolute;
+          inset: 0;
+          border-radius: inherit;
+          box-shadow: 0 8px 40px rgba(106,0,255,0.14), inset 0 0 30px rgba(106,0,255,0.06);
+          pointer-events: none;
+        }
+
+        /* adjust for dark inner card so text stays readable */
+        .relative.z-10 { color: inherit; }
+
+        /* optional: tune for smaller screens */
+        @media (max-width: 768px) {
+          .rgb-messages { filter: blur(10px); opacity: 0.18; }
+        }
+      `}</style>
     </div>
   );
 };
