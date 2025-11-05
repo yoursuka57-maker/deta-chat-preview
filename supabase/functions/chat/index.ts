@@ -90,7 +90,7 @@ Deno.serve(async (req) => {
       "LPT-3.5": "google/gemini-2.5-pro",
     };
 
-    const actualModel = generateImage ? "google/gemini-2.5-flash-image-preview" : (modelMap[model] || "google/gemini-2.5-flash");
+    const actualModel = generateImage ? "google/gemini-2.5-flash-image-preview" : (modelMap[model] || "google/gemini-2.5-pro");
 
     // יצירת system prompt מתוך deta-profile
     const systemPrompt = `You are ${detaProfile.name} - ${detaProfile.identity.description}
