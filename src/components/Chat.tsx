@@ -412,7 +412,7 @@ export const Chat = () => {
               <Button variant="ghost" size="icon" onClick={() => fileInputRef.current?.click()} className="hover:bg-primary/20 hover:text-primary transition-smooth" title="העלה תמונות">
                 <Paperclip className="h-5 w-5" />
               </Button>
-              <Input value={input} onChange={(e) => setInput(e.target.value)} onKeyPress={handleKeyPress} placeholder="שאל כל דבר..." className="flex-1 bg-transparent border-0 focus-visible:ring-0 focus-visible:ring-offset-0" disabled={isLoading} />
+              <Input value={input} onChange={(e) => setInput(e.target.value)} onKeyPress={handleKeyPress} placeholder="Ask Anything..." className="flex-1 bg-transparent border-0 focus-visible:ring-0 focus-visible:ring-offset-0" disabled={isLoading} />
               <Button variant="ghost" size="icon" className="hover:bg-primary/20 hover:text-primary transition-smooth" disabled title="קלט קולי בקרוב">
                 <Mic className="h-5 w-5" />
               </Button>
