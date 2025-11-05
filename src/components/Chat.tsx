@@ -37,6 +37,8 @@ export const Chat = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [selectedModel, setSelectedModel] = useState("LPT-3.5");
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
+  const [uploadedImages, setUploadedImages] = useState<string[]>([]);
+  const [detaStatus, setDetaStatus] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -127,32 +129,38 @@ export const Chat = () => {
   };
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file || !user) return;
+    const files = e.target.files;
+    if (!files || files.length === 0 || !user) return;
+    
     try {
-      const fileExt = file.name.split(".").pop();
-      const fileName = `${user.id}/${Date.now()}.${fileExt}`;
-      const { error: uploadError } = await supabase.storage
-        .from("chat-images")
-        .upload(fileName, file);
-      if (uploadError) throw uploadError;
-      const { data } = supabase.storage.from("chat-images").getPublicUrl(fileName);
-      setUploadedImage(data.publicUrl);
-      toast.success("Image uploaded!");
+      const uploadPromises = Array.from(files).map(async (file) => {
+        const fileExt = file.name.split(".").pop();
+        const fileName = `${user.id}/${Date.now()}-${Math.random()}.${fileExt}`;
+        const { error: uploadError } = await supabase.storage
+          .from("chat-images")
+          .upload(fileName, file);
+        if (uploadError) throw uploadError;
+        const { data } = supabase.storage.from("chat-images").getPublicUrl(fileName);
+        return data.publicUrl;
+      });
+      
+      const urls = await Promise.all(uploadPromises);
+      setUploadedImages(prev => [...prev, ...urls]);
+      toast.success(`${urls.length} תמונות הועלו בהצלחה!`);
     } catch (error: any) {
-      toast.error("Failed to upload image");
+      toast.error("Failed to upload images");
     }
   };
 
   const handleSend = async () => {
-    if ((!input.trim() && !uploadedImage) || isLoading) return;
+    if ((!input.trim() && uploadedImages.length === 0) || isLoading) return;
 
     const userMessage: Message = {
       id: Date.now().toString(),
       role: "user",
-      content: input || "Check this image",
+      content: input || "Check these images",
       timestamp: new Date(),
-      images: uploadedImage ? [uploadedImage] : undefined,
+      images: uploadedImages.length > 0 ? uploadedImages : undefined,
     };
 
     setMessages((prev) => [...prev, userMessage]);
@@ -160,12 +168,21 @@ export const Chat = () => {
 
     const currentInput = input;
     setInput("");
-    setUploadedImage(null);
+    setUploadedImages([]);
     setIsLoading(true);
+    setDetaStatus("Deta Response...");
 
-    // Detect if user wants to generate an image
+    // Detect what Deta is doing
     const imageKeywords = ["צור תמונה", "תמונה של", "הראה לי תמונה", "generate image", "create image"];
     const generateImage = imageKeywords.some((keyword) => currentInput.includes(keyword));
+    const codeKeywords = ["כתוב קוד", "תכנת", "צור פונקציה", "write code", "create function", "program"];
+    const searchKeywords = ["חפש", "מה זה", "מצא", "search", "find", "what is"];
+    const isCode = codeKeywords.some((keyword) => currentInput.toLowerCase().includes(keyword));
+    const isSearch = searchKeywords.some((keyword) => currentInput.toLowerCase().includes(keyword));
+    
+    if (generateImage) setDetaStatus("Deta Generating Image...");
+    else if (isCode) setDetaStatus("Deta Coding...");
+    else if (isSearch) setDetaStatus("Deta Searching...");
 
     let assistantContent = "";
     const assistantImages: string[] = [];
@@ -224,6 +241,7 @@ export const Chat = () => {
         },
         onDone: async () => {
           setIsLoading(false);
+          setDetaStatus(null);
           const assistantMessage: Message = {
             id: Date.now().toString(),
             role: "assistant",
@@ -237,12 +255,14 @@ export const Chat = () => {
         onError: (error) => {
           toast.error(error);
           setIsLoading(false);
+          setDetaStatus(null);
           setMessages((prev) => prev.slice(0, -1));
         },
       });
     } catch (error) {
       toast.error("שגיאה בשליחת ההודעה");
       setIsLoading(false);
+      setDetaStatus(null);
       setMessages((prev) => prev.slice(0, -1));
     }
   };
@@ -345,10 +365,22 @@ export const Chat = () => {
               )}
             </AnimatePresence>
 
-            {isLoading && (
-              <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} className="flex items-center gap-3 text-muted-foreground p-4">
-                <motion.div animate={{ scale: [1, 1.2, 1], opacity: [0.5, 1, 0.5] }} transition={{ duration: 1.5, repeat: Infinity }} className="h-3 w-3 rounded-full bg-primary shadow-neon" />
-                <span className="text-sm">Deta Response...</span>
+            {isLoading && detaStatus && (
+              <motion.div 
+                initial={{ opacity: 0, scale: 0.8 }} 
+                animate={{ opacity: 1, scale: 1 }} 
+                className="flex items-center gap-3 p-4 rounded-2xl bg-card/40 border border-primary/30 glow-border"
+              >
+                <motion.div 
+                  animate={{ 
+                    scale: [1, 1.3, 1],
+                    rotate: [0, 180, 360],
+                    opacity: [0.5, 1, 0.5] 
+                  }} 
+                  transition={{ duration: 2, repeat: Infinity }} 
+                  className="h-4 w-4 rounded-full bg-gradient-to-r from-primary to-primary-glow shadow-neon" 
+                />
+                <span className="text-sm font-medium text-primary">{detaStatus}</span>
               </motion.div>
             )}
             <div ref={scrollRef} />
@@ -358,25 +390,34 @@ export const Chat = () => {
         {/* Input Area */}
         <motion.div initial={{ y: 50, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ duration: 0.5 }} className="glass border-t border-border/50 px-4 py-6">
           <div className="mx-auto max-w-4xl">
-            {uploadedImage && (
-              <div className="mb-3 relative inline-block">
-                <img src={uploadedImage} alt="Upload preview" className="h-20 w-20 object-cover rounded-xl glass glow-border" />
-                <Button size="icon" variant="ghost" onClick={() => setUploadedImage(null)} className="absolute -top-2 -right-2 h-6 w-6 rounded-full bg-destructive hover:bg-destructive/80">
-                  <X className="h-3 w-3" />
-                </Button>
+            {uploadedImages.length > 0 && (
+              <div className="mb-3 flex flex-wrap gap-2">
+                {uploadedImages.map((img, idx) => (
+                  <div key={idx} className="relative inline-block">
+                    <img src={img} alt={`Upload preview ${idx + 1}`} className="h-20 w-20 object-cover rounded-xl glass glow-border" />
+                    <Button 
+                      size="icon" 
+                      variant="ghost" 
+                      onClick={() => setUploadedImages(prev => prev.filter((_, i) => i !== idx))} 
+                      className="absolute -top-2 -right-2 h-6 w-6 rounded-full bg-destructive hover:bg-destructive/80"
+                    >
+                      <X className="h-3 w-3" />
+                    </Button>
+                  </div>
+                ))}
               </div>
             )}
             <div className="relative flex items-center gap-3 p-3 rounded-2xl glass glow-border shadow-neon">
-              <input ref={fileInputRef} type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
-              <Button variant="ghost" size="icon" onClick={() => fileInputRef.current?.click()} className="hover:bg-primary/20 hover:text-primary transition-smooth" title="Upload files (images, documents, etc.)">
+              <input ref={fileInputRef} type="file" accept="image/*" multiple onChange={handleImageUpload} className="hidden" />
+              <Button variant="ghost" size="icon" onClick={() => fileInputRef.current?.click()} className="hover:bg-primary/20 hover:text-primary transition-smooth" title="העלה תמונות">
                 <Paperclip className="h-5 w-5" />
               </Button>
-              <Input value={input} onChange={(e) => setInput(e.target.value)} onKeyPress={handleKeyPress} placeholder="Ask anything" className="flex-1 bg-transparent border-0 focus-visible:ring-0 focus-visible:ring-offset-0" disabled={isLoading} />
-              <Button variant="ghost" size="icon" className="hover:bg-primary/20 hover:text-primary transition-smooth" disabled title="Voice input coming soon">
+              <Input value={input} onChange={(e) => setInput(e.target.value)} onKeyPress={handleKeyPress} placeholder="שאל כל דבר..." className="flex-1 bg-transparent border-0 focus-visible:ring-0 focus-visible:ring-offset-0" disabled={isLoading} />
+              <Button variant="ghost" size="icon" className="hover:bg-primary/20 hover:text-primary transition-smooth" disabled title="קלט קולי בקרוב">
                 <Mic className="h-5 w-5" />
               </Button>
               <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                <Button onClick={handleSend} disabled={(!input.trim() && !uploadedImage) || isLoading} size="icon" className="gradient-primary shadow-neon transition-smooth hover:shadow-glow">
+                <Button onClick={handleSend} disabled={(!input.trim() && uploadedImages.length === 0) || isLoading} size="icon" className="gradient-primary shadow-neon transition-smooth hover:shadow-glow">
                   <Send className="h-4 w-4" />
                 </Button>
               </motion.div>
