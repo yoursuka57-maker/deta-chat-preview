@@ -165,7 +165,7 @@ export const Sidebar = ({
               onClick={() => navigate("/auth")}
               title="Login"
             >
-              🔐
+              🔵
             </Button>
           )
         ) : (
