@@ -367,20 +367,20 @@ export const Chat = () => {
 
             {isLoading && detaStatus && (
               <motion.div 
-                initial={{ opacity: 0, scale: 0.8 }} 
-                animate={{ opacity: 1, scale: 1 }} 
-                className="flex items-center gap-3 p-4 rounded-2xl bg-card/40 border border-primary/30 glow-border"
+                initial={{ opacity: 0, y: 10 }} 
+                animate={{ opacity: 1, y: 0 }} 
+                className="flex items-center gap-2"
               >
                 <motion.div 
                   animate={{ 
-                    scale: [1, 1.3, 1],
+                    scale: [1, 1.2, 1],
                     rotate: [0, 180, 360],
                     opacity: [0.5, 1, 0.5] 
                   }} 
                   transition={{ duration: 2, repeat: Infinity }} 
-                  className="h-4 w-4 rounded-full bg-gradient-to-r from-primary to-primary-glow shadow-neon" 
+                  className="h-2 w-2 rounded-full bg-gradient-to-r from-primary to-primary-glow shadow-neon" 
                 />
-                <span className="text-sm font-medium text-primary">{detaStatus}</span>
+                <span className="text-sm text-muted-foreground">{detaStatus}</span>
               </motion.div>
             )}
             <div ref={scrollRef} />
