@@ -35,7 +35,7 @@ export const Chat = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [selectedModel, setSelectedModel] = useState("LPT-3.5");
+  const [selectedModel, setSelectedModel] = useState("LPT-2.5");
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
   const [uploadedImages, setUploadedImages] = useState<string[]>([]);
   const [detaStatus, setDetaStatus] = useState<string | null>(null);
@@ -214,8 +214,11 @@ export const Chat = () => {
     };
 
     try {
+      // Send last 20 messages for better context and faster response
+      const recentMessages = messages.slice(-20).concat(userMessage);
+      
       await streamChat({
-        messages: messages.concat(userMessage).map((m) => ({ role: m.role, content: m.content })),
+        messages: recentMessages.map((m) => ({ role: m.role, content: m.content })),
         model: selectedModel,
         generateImage,
         onDelta: (chunk) => upsertAssistant(chunk),
@@ -282,6 +285,7 @@ export const Chat = () => {
         onNewChat={createNewConversation}
         onSelectConversation={loadConversation}
         currentConversationId={currentConversationId || undefined}
+        user={user}
       />
       <div className="flex-1 flex flex-col">
         {/* Header */}
