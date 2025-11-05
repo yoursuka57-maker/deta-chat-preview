@@ -200,47 +200,71 @@ Always maintain these standards in your responses! 🚀`;
     let finalMessages = [...messages];
     let toolCallsNeeded = true;
     let searchSources: any[] = [];
+    let maxIterations = 3; // Prevent infinite loops
+    let currentIteration = 0;
 
-    while (toolCallsNeeded) {
-      const tempResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${LOVABLE_API_KEY}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          ...requestBody,
-          messages: [{ role: "system", content: systemPrompt }, ...finalMessages],
-          stream: false,
-        }),
-      });
-
-      const tempData = await tempResponse.json();
-      const choice = tempData.choices?.[0];
+    while (toolCallsNeeded && currentIteration < maxIterations) {
+      currentIteration++;
       
-      if (choice?.message?.tool_calls && choice.message.tool_calls.length > 0) {
-        // Add assistant message with tool calls
-        finalMessages.push(choice.message);
+      try {
+        const tempResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${LOVABLE_API_KEY}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            ...requestBody,
+            messages: [{ role: "system", content: systemPrompt }, ...finalMessages],
+            stream: false,
+          }),
+        });
 
-        // Execute tool calls
-        for (const toolCall of choice.message.tool_calls) {
-          if (toolCall.function.name === "search_google") {
-            const args = JSON.parse(toolCall.function.arguments);
-            const searchResults = await searchGoogle(args.query);
-            
-            // Store sources for later
-            if (searchResults.results) {
-              searchSources = searchResults.results;
-            }
-            
-            finalMessages.push({
-              role: "tool",
-              tool_call_id: toolCall.id,
-              content: JSON.stringify(searchResults),
-            });
-          }
+        if (!tempResponse.ok) {
+          console.error("Tool call response not ok:", tempResponse.status);
+          toolCallsNeeded = false;
+          break;
         }
-      } else {
+
+        const tempData = await tempResponse.json();
+        const choice = tempData.choices?.[0];
+        
+        if (choice?.message?.tool_calls && choice.message.tool_calls.length > 0) {
+          // Add assistant message with tool calls
+          finalMessages.push(choice.message);
+
+          // Execute tool calls
+          for (const toolCall of choice.message.tool_calls) {
+            if (toolCall.function.name === "search_google") {
+              try {
+                const args = JSON.parse(toolCall.function.arguments);
+                const searchResults = await searchGoogle(args.query);
+                
+                // Store sources for later
+                if (searchResults.results) {
+                  searchSources = searchResults.results;
+                }
+                
+                finalMessages.push({
+                  role: "tool",
+                  tool_call_id: toolCall.id,
+                  content: JSON.stringify(searchResults),
+                });
+              } catch (toolError) {
+                console.error("Tool execution error:", toolError);
+                finalMessages.push({
+                  role: "tool",
+                  tool_call_id: toolCall.id,
+                  content: JSON.stringify({ error: "Failed to execute search" }),
+                });
+              }
+            }
+          }
+        } else {
+          toolCallsNeeded = false;
+        }
+      } catch (loopError) {
+        console.error("Error in tool call loop:", loopError);
         toolCallsNeeded = false;
       }
     }
