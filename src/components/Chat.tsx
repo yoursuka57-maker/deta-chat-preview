@@ -35,7 +35,7 @@ export const Chat = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [selectedModel, setSelectedModel] = useState("LPT-3");
+  const [selectedModel, setSelectedModel] = useState("LPT-2.5");
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
   const [uploadedImages, setUploadedImages] = useState<string[]>([]);
   const [detaStatus, setDetaStatus] = useState<string | null>(null);
