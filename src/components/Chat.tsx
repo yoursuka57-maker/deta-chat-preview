@@ -390,7 +390,6 @@ export const Chat = () => {
             <div ref={scrollRef} />
           </div>
         </ScrollArea>
-
         {/* Input Area */}
         <motion.div initial={{ y: 50, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ duration: 0.5 }} className="glass border-t border-border/50 px-4 py-6">
           <div className="mx-auto max-w-4xl">
@@ -431,5 +430,43 @@ export const Chat = () => {
         </motion.div>
       </div>
     </div>
-  );
-};
+         {/* Input Area */}
+        <motion.div initial={{ y: 50, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ duration: 0.5 }} className="glass border-t border-border/50 px-4 py-6">
+          <div className="mx-auto max-w-4xl">
+            {uploadedImages.length > 0 && (
+              <div className="mb-3 flex flex-wrap gap-2">
+                {uploadedImages.map((img, idx) => (
+                  <div key={idx} className="relative inline-block">
+                    <img src={img} alt={`Upload preview ${idx + 1}`} className="h-20 w-20 object-cover rounded-xl glass glow-border" />
+                    <Button 
+                      size="icon" 
+                      variant="ghost" 
+                      onClick={() => setUploadedImages(prev => prev.filter((_, i) => i !== idx))} 
+                      className="absolute -top-2 -right-2 h-6 w-6 rounded-full bg-destructive hover:bg-destructive/80"
+                    >
+                      <X className="h-3 w-3" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
+            <div className="relative flex items-center gap-3 p-3 rounded-2xl glass glow-border shadow-neon">
+              <input ref={fileInputRef} type="file" accept="image/*" multiple onChange={handleImageUpload} className="hidden" />
+              <Button variant="ghost" size="icon" onClick={() => fileInputRef.current?.click()} className="hover:bg-primary/20 hover:text-primary transition-smooth" title="העלה תמונות">
+                <Paperclip className="h-5 w-5" />
+              </Button>
+              <Input value={input} onChange={(e) => setInput(e.target.value)} onKeyPress={handleKeyPress} placeholder="Ask Anything..." className="flex-1 bg-transparent border-0 focus-visible:ring-0 focus-visible:ring-offset-0" disabled={isLoading} />
+              <Button variant="ghost" size="icon" className="hover:bg-primary/20 hover:text-primary transition-smooth" disabled title="קלט קולי בקרוב">
+                <Mic className="h-5 w-5" />
+              </Button>
+              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                <Button onClick={handleSend} disabled={(!input.trim() && uploadedImages.length === 0) || isLoading} size="icon" className="gradient-primary shadow-neon transition-smooth hover:shadow-glow">
+                  <Send className="h-4 w-4" />
+                </Button>
+              </motion.div>
+            </div>
+            <p className="mt-3 text-center text-xs text-muted-foreground">Deta · Powered by LiskCell · LPT Engine</p>
+          </div>
+        </motion.div>
+      </div>
+    </div>
