@@ -149,25 +149,10 @@ export const Sidebar = ({
         </nav>
       </div>
 
-      {/* Footer - כשהסיידבר סגור, למטה */}
+      {/* Footer - User Menu */}
       <div className="p-4 flex justify-center items-center">
         {isCollapsed ? (
-          user ? (
-            <img
-              src={user.avatar_url || "/default-avatar.png"}
-              alt="User Avatar"
-              className="h-8 w-8 rounded-full"
-            />
-          ) : (
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={() => navigate("/auth")}
-              title="Login"
-            >
-              🔐
-            </Button>
-          )
+          <UserMenu navigate={navigate} />
         ) : (
           <UserMenu navigate={navigate} />
         )}

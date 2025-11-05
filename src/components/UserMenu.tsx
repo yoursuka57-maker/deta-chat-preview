@@ -51,24 +51,17 @@ export const UserMenu = ({ navigate }: UserMenuProps) => {
   const userInitial = user.email?.[0]?.toUpperCase() || "U";
 
   return (
-    <div className="relative">
+    <div className="relative w-full">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-3 p-2 rounded-2xl hover:bg-sidebar-accent/50 transition-smooth"
+        className="flex items-center gap-3 p-2 rounded-2xl hover:bg-sidebar-accent/50 transition-smooth w-full justify-center"
+        title={user.email || "User Menu"}
       >
         <Avatar className="h-10 w-10 border-2 border-primary/20">
           <AvatarFallback className="bg-primary/10 text-primary">
             {userInitial}
           </AvatarFallback>
         </Avatar>
-        <div className="text-left hidden sm:block">
-          <p className="text-sm font-medium text-foreground truncate max-w-[150px]">
-            {user.user_metadata?.full_name || user.email}
-          </p>
-          <p className="text-xs text-muted-foreground truncate max-w-[150px]">
-            {user.email}
-          </p>
-        </div>
       </button>
 
       <AnimatePresence>
