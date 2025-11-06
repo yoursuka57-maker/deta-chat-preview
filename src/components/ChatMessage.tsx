@@ -112,21 +112,50 @@ export const ChatMessage = ({ message, index = 0 }: ChatMessageProps) => {
         
         {message.images && message.images.length > 0 && (
           <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
+            initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.5, delay: 0.2 }}
             className="mt-4 space-y-3"
           >
             {message.images.map((img, idx) => (
-              <motion.img
+              <motion.div
                 key={idx}
-                src={img}
-                alt={`Generated ${idx + 1}`}
-                initial={{ opacity: 0, filter: "blur(10px)" }}
-                animate={{ opacity: 1, filter: "blur(0px)" }}
-                transition={{ duration: 0.6 }}
-                className="rounded-xl max-w-full border border-primary/30 shadow-glow"
-              />
+                initial={{ opacity: 0, scale: 0.5, rotateY: -90 }}
+                animate={{ opacity: 1, scale: 1, rotateY: 0 }}
+                transition={{ 
+                  duration: 0.8, 
+                  delay: idx * 0.2,
+                  type: "spring",
+                  stiffness: 100
+                }}
+                className="relative group"
+              >
+                <motion.div
+                  className="absolute inset-0 bg-gradient-to-r from-primary/20 via-primary-glow/20 to-primary/20 rounded-xl blur-xl"
+                  animate={{ 
+                    opacity: [0.5, 1, 0.5],
+                    scale: [1, 1.05, 1]
+                  }}
+                  transition={{ duration: 2, repeat: Infinity }}
+                />
+                <motion.img
+                  src={img}
+                  alt={`Generated ${idx + 1}`}
+                  initial={{ opacity: 0, filter: "blur(20px) brightness(0.5)" }}
+                  animate={{ opacity: 1, filter: "blur(0px) brightness(1)" }}
+                  whileHover={{ scale: 1.02 }}
+                  transition={{ duration: 0.8, delay: idx * 0.2 + 0.3 }}
+                  className="relative rounded-xl max-w-full border-2 border-primary/40 shadow-neon"
+                />
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: idx * 0.2 + 0.8 }}
+                  className="mt-2 text-xs text-center text-primary/70 font-medium"
+                >
+                  ✨ Created by Deta AI
+                </motion.div>
+              </motion.div>
             ))}
           </motion.div>
         )}
