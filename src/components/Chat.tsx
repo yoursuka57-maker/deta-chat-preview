@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Zap, Send, Sparkles, Paperclip, Mic, X } from "lucide-react";
+import { Zap, Send, Sparkles, Paperclip, Mic, X, Square } from "lucide-react";
 import { ChatMessage } from "./ChatMessage";
 import { streamChat } from "@/lib/streamChat";
 import { toast } from "sonner";
@@ -41,6 +41,7 @@ export const Chat = () => {
   const [detaStatus, setDetaStatus] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const abortControllerRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
     // Check auth
@@ -152,6 +153,15 @@ export const Chat = () => {
     }
   };
 
+  const handleStop = () => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+      abortControllerRef.current = null;
+    }
+    setIsLoading(false);
+    setDetaStatus(null);
+  };
+
   const handleSend = async () => {
     if ((!input.trim() && uploadedImages.length === 0) || isLoading) return;
 
@@ -171,6 +181,9 @@ export const Chat = () => {
     setUploadedImages([]);
     setIsLoading(true);
     setDetaStatus("Deta Response...");
+
+    // Create abort controller for this request
+    abortControllerRef.current = new AbortController();
 
     // Detect what Deta is doing
     const imageKeywords = ["צור תמונה", "תמונה של", "הראה לי תמונה", "צייר", "generate image", "create image", "draw", "show me image", "picture of"];
@@ -217,6 +230,7 @@ export const Chat = () => {
       await streamChat({
         messages: messages.concat(userMessage).map((m) => ({ role: m.role, content: m.content })),
         model: selectedModel,
+        abortSignal: abortControllerRef.current?.signal,
         onDelta: (chunk) => upsertAssistant(chunk),
         onImage: (imageUrl) => {
           assistantImages.push(imageUrl);
@@ -241,6 +255,7 @@ export const Chat = () => {
         onDone: async () => {
           setIsLoading(false);
           setDetaStatus(null);
+          abortControllerRef.current = null;
           const assistantMessage: Message = {
             id: Date.now().toString(),
             role: "assistant",
@@ -255,13 +270,18 @@ export const Chat = () => {
           toast.error(error);
           setIsLoading(false);
           setDetaStatus(null);
+          abortControllerRef.current = null;
           setMessages((prev) => prev.slice(0, -1));
         },
       });
     } catch (error) {
-      toast.error("שגיאה בשליחת ההודעה");
+      // Don't show error if it was aborted by user
+      if (error instanceof Error && error.name !== 'AbortError') {
+        toast.error("שגיאה בשליחת ההודעה");
+      }
       setIsLoading(false);
       setDetaStatus(null);
+      abortControllerRef.current = null;
       setMessages((prev) => prev.slice(0, -1));
     }
   };
@@ -416,8 +436,14 @@ export const Chat = () => {
                 <Mic className="h-5 w-5" />
               </Button>
               <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                <Button onClick={handleSend} disabled={(!input.trim() && uploadedImages.length === 0) || isLoading} size="icon" className="gradient-primary shadow-neon transition-smooth hover:shadow-glow">
-                  <Send className="h-4 w-4" />
+                <Button 
+                  onClick={isLoading ? handleStop : handleSend} 
+                  disabled={!isLoading && (!input.trim() && uploadedImages.length === 0)} 
+                  size="icon" 
+                  className={isLoading ? "bg-destructive hover:bg-destructive/90 shadow-neon transition-smooth" : "gradient-primary shadow-neon transition-smooth hover:shadow-glow"}
+                  title={isLoading ? "עצור תשובה" : "שלח הודעה"}
+                >
+                  {isLoading ? <Square className="h-4 w-4" fill="currentColor" /> : <Send className="h-4 w-4" />}
                 </Button>
               </motion.div>
             </div>

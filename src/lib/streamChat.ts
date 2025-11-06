@@ -3,6 +3,7 @@ type Msg = { role: "user" | "assistant"; content: string };
 export async function streamChat({
   messages,
   model = "LPT-3.5",
+  abortSignal,
   onDelta,
   onImage,
   onSources,
@@ -11,6 +12,7 @@ export async function streamChat({
 }: {
   messages: Msg[];
   model?: string;
+  abortSignal?: AbortSignal;
   onDelta: (deltaText: string) => void;
   onImage?: (imageUrl: string) => void;
   onSources?: (sources: Array<{ title: string; link: string; snippet: string }>) => void;
@@ -27,6 +29,7 @@ export async function streamChat({
         Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
       },
       body: JSON.stringify({ messages, model }),
+      signal: abortSignal,
     });
 
     if (!resp.ok) {
