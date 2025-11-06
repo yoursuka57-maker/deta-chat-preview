@@ -97,7 +97,7 @@ Deno.serve(async (req) => {
       "LPT-3.5": "google/gemini-2.5-pro",
     };
 
-    const actualModel = autoGenerateImage ? "google/gemini-2.5-flash-image" : (modelMap[model] || "google/gemini-2.5-pro");
+    const actualModel = autoGenerateImage ? "google/gemini-2.5-flash-image-preview" : (modelMap[model] || "google/gemini-2.5-pro");
     
     console.log("Selected model:", { actualModel, requestedModel: model, autoGenerateImage });
 
@@ -182,8 +182,8 @@ ${detaProfile.instructions.responses.liskasYR}
 
 Always maintain these standards in your responses! 🚀`;
 
-    // Add search tool
-    const tools = [
+    // Add search tool only for non-image models
+    const tools = autoGenerateImage ? undefined : [
       {
         type: "function",
         function: {
@@ -213,8 +213,12 @@ Always maintain these standards in your responses! 🚀`;
         ...messages,
       ],
       stream: true,
-      tools: tools,
     };
+
+    // Add tools only for non-image models
+    if (tools) {
+      requestBody.tools = tools;
+    }
 
     if (autoGenerateImage) {
       requestBody.modalities = ["image", "text"];
@@ -228,9 +232,9 @@ Always maintain these standards in your responses! 🚀`;
       lastMessage: requestBody.messages[requestBody.messages.length - 1]?.content?.substring(0, 100)
     });
 
-    // Handle tool calls
+    // Handle tool calls (only for non-image models)
     let finalMessages = [...messages];
-    let toolCallsNeeded = true;
+    let toolCallsNeeded = !autoGenerateImage; // Skip tool calls for image generation
     let searchSources: any[] = [];
     let maxIterations = 3; // Prevent infinite loops
     let currentIteration = 0;
