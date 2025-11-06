@@ -389,7 +389,7 @@ export const Chat = () => {
                 initial={{ opacity: 0, y: 10 }} 
                 animate={{ opacity: 1, y: 0 }} 
                 exit={{ opacity: 0, y: -10 }}
-                className="flex items-center gap-3 p-4 rounded-xl glass glow-border"
+                className="flex items-center gap-2"
               >
                 <motion.div 
                   animate={{ 
@@ -398,19 +398,9 @@ export const Chat = () => {
                     opacity: [0.5, 1, 0.5] 
                   }} 
                   transition={{ duration: 2, repeat: Infinity }} 
-                  className="h-3 w-3 rounded-full bg-gradient-to-r from-primary via-primary-glow to-primary shadow-neon" 
+                  className="h-2 w-2 rounded-full bg-gradient-to-r from-primary via-primary-glow to-primary shadow-neon" 
                 />
-                <div className="flex-1">
-                  <span className="text-sm font-medium text-foreground">{detaStatus}</span>
-                  {detaStatus.includes("Image") && (
-                    <motion.div
-                      initial={{ width: "0%" }}
-                      animate={{ width: "100%" }}
-                      transition={{ duration: 3, repeat: Infinity }}
-                      className="h-1 bg-gradient-to-r from-primary to-primary-glow rounded-full mt-2"
-                    />
-                  )}
-                </div>
+                <span className="text-sm text-muted-foreground">{detaStatus}</span>
               </motion.div>
             )}
             <div ref={scrollRef} />
