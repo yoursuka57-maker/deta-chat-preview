@@ -85,6 +85,8 @@ Deno.serve(async (req) => {
     const imageKeywords = ["צור תמונה", "תמונה של", "הראה לי תמונה", "צייר", "generate image", "create image", "draw", "show me image", "picture of"];
     const autoGenerateImage = imageKeywords.some(keyword => lastUserMessage.includes(keyword));
 
+    console.log("Image generation check:", { autoGenerateImage, lastUserMessage: lastUserMessage.substring(0, 100) });
+
     // Map LPT models to actual models
     const modelMap: Record<string, string> = {
       "LPT-1": "google/gemini-2.5-flash-lite",
@@ -95,7 +97,9 @@ Deno.serve(async (req) => {
       "LPT-3.5": "google/gemini-2.5-pro",
     };
 
-    const actualModel = autoGenerateImage ? "google/gemini-2.5-flash-image-preview" : (modelMap[model] || "google/gemini-2.5-pro");
+    const actualModel = autoGenerateImage ? "google/gemini-2.5-flash-image" : (modelMap[model] || "google/gemini-2.5-pro");
+    
+    console.log("Selected model:", { actualModel, requestedModel: model, autoGenerateImage });
 
     // יצירת system prompt מתוך deta-profile
     const systemPrompt = `You are ${detaProfile.name} - ${detaProfile.identity.description}
@@ -214,7 +218,15 @@ Always maintain these standards in your responses! 🚀`;
 
     if (autoGenerateImage) {
       requestBody.modalities = ["image", "text"];
+      console.log("Adding image generation modalities to request");
     }
+
+    console.log("Sending request to AI Gateway:", {
+      model: requestBody.model,
+      messagesCount: requestBody.messages.length,
+      hasModalities: !!requestBody.modalities,
+      lastMessage: requestBody.messages[requestBody.messages.length - 1]?.content?.substring(0, 100)
+    });
 
     // Handle tool calls
     let finalMessages = [...messages];
@@ -321,9 +333,16 @@ Always maintain these standards in your responses! 🚀`;
         );
       }
       const errorText = await response.text();
-      console.error("AI gateway error:", response.status, errorText);
+      console.error("AI gateway error details:", {
+        status: response.status,
+        statusText: response.statusText,
+        error: errorText,
+        model: actualModel,
+        autoGenerateImage,
+        lastUserMessage: messages[messages.length - 1]?.content.substring(0, 100)
+      });
       return new Response(
-        JSON.stringify({ error: "שגיאה בשער AI" }), 
+        JSON.stringify({ error: `שגיאה בשער AI: ${errorText.substring(0, 200)}` }), 
         {
           status: 500,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
