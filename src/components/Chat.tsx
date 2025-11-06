@@ -173,14 +173,14 @@ export const Chat = () => {
     setDetaStatus("Deta Response...");
 
     // Detect what Deta is doing
-    const imageKeywords = ["צור תמונה", "תמונה של", "הראה לי תמונה", "generate image", "create image"];
-    const generateImage = imageKeywords.some((keyword) => currentInput.includes(keyword));
+    const imageKeywords = ["צור תמונה", "תמונה של", "הראה לי תמונה", "צייר", "generate image", "create image", "draw", "show me image", "picture of"];
     const codeKeywords = ["כתוב קוד", "תכנת", "צור פונקציה", "write code", "create function", "program"];
     const searchKeywords = ["חפש", "מה זה", "מצא", "search", "find", "what is"];
+    const isImage = imageKeywords.some((keyword) => currentInput.toLowerCase().includes(keyword));
     const isCode = codeKeywords.some((keyword) => currentInput.toLowerCase().includes(keyword));
     const isSearch = searchKeywords.some((keyword) => currentInput.toLowerCase().includes(keyword));
     
-    if (generateImage) setDetaStatus("Deta Generating Image...");
+    if (isImage) setDetaStatus("Deta Generating Image...");
     else if (isCode) setDetaStatus("Deta Coding...");
     else if (isSearch) setDetaStatus("Deta Searching...");
 
@@ -217,7 +217,6 @@ export const Chat = () => {
       await streamChat({
         messages: messages.concat(userMessage).map((m) => ({ role: m.role, content: m.content })),
         model: selectedModel,
-        generateImage,
         onDelta: (chunk) => upsertAssistant(chunk),
         onImage: (imageUrl) => {
           assistantImages.push(imageUrl);

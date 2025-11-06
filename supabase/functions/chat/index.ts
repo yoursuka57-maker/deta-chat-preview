@@ -44,7 +44,7 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { messages, model = "LPT-3.5", generateImage = false } = await req.json();
+    const { messages, model = "LPT-3.5" } = await req.json();
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     const GOOGLE_SEARCH_API_KEY = Deno.env.get("GOOGLE_SEARCH_API_KEY");
     const GOOGLE_SEARCH_ENGINE_ID = Deno.env.get("GOOGLE_SEARCH_ENGINE_ID");
@@ -80,6 +80,11 @@ Deno.serve(async (req) => {
       }
     }
 
+    // Detect image generation request from user message
+    const lastUserMessage = messages[messages.length - 1]?.content.toLowerCase() || "";
+    const imageKeywords = ["צור תמונה", "תמונה של", "הראה לי תמונה", "צייר", "generate image", "create image", "draw", "show me image", "picture of"];
+    const autoGenerateImage = imageKeywords.some(keyword => lastUserMessage.includes(keyword));
+
     // Map LPT models to actual models
     const modelMap: Record<string, string> = {
       "LPT-1": "google/gemini-2.5-flash-lite",
@@ -90,7 +95,7 @@ Deno.serve(async (req) => {
       "LPT-3.5": "google/gemini-2.5-pro",
     };
 
-    const actualModel = generateImage ? "google/gemini-2.5-flash-image-preview" : (modelMap[model] || "google/gemini-2.5-pro");
+    const actualModel = autoGenerateImage ? "google/gemini-2.5-flash-image-preview" : (modelMap[model] || "google/gemini-2.5-pro");
 
     // יצירת system prompt מתוך deta-profile
     const systemPrompt = `You are ${detaProfile.name} - ${detaProfile.identity.description}
@@ -108,6 +113,19 @@ Created by ${detaProfile.developer}.
 - When asked "What model are you?" or "Which model?" respond with: "I'm **${model}**"
 - ONLY mention your model when explicitly asked
 - DO NOT mention your model in every response
+
+🧠 **HUMAN-LIKE UNDERSTANDING:**
+- Understand context deeply like a human would
+- Remember previous messages in the conversation and reference them naturally
+- Understand emotions, sarcasm, humor, and implicit meanings
+- Be aware of cultural nuances and social context
+- Adapt your response length to the complexity of the question
+- For simple questions, give concise answers. For complex topics, elaborate
+- Understand when users are frustrated and respond with empathy
+- Recognize when users want a conversation vs quick information
+- Use natural, conversational language - avoid robotic or formulaic responses
+- Think about what the user REALLY wants, not just what they literally asked
+- Connect ideas across messages to build coherent conversations
 
 🎯 **Your Behavior:**
 - Always identify as ${detaProfile.identity.respondAs}
@@ -146,9 +164,11 @@ ${detaProfile.instructions.responses.liskasYR}
 - ${detaProfile.instructions.responses["lpt-3"]}
 - ${detaProfile.instructions.responses["lpt-3.5"]}
 
-💡 **When asked to create images:**
-- If the user requests "create an image", "image of", or "show me a picture", explain that you're generating the image
-- The image will be automatically created by the system
+🎨 **Image Generation Capability:**
+- You can generate images using advanced AI
+- When users ask for "צור תמונה", "תמונה של", "הראה לי תמונה", "generate image", "create image", "draw", or similar requests, you will automatically generate an image
+- Respond naturally and describe what you're creating
+- The image will appear automatically in the chat
 
 🔍 **Search Capability:**
 - You have access to Google Search to find current information
@@ -192,7 +212,7 @@ Always maintain these standards in your responses! 🚀`;
       tools: tools,
     };
 
-    if (generateImage) {
+    if (autoGenerateImage) {
       requestBody.modalities = ["image", "text"];
     }
 
