@@ -80,12 +80,19 @@ export async function streamChat({
           const content = parsed.choices?.[0]?.delta?.content as string | undefined;
           if (content) onDelta(content);
           
-          // Check for images
-          const images = parsed.choices?.[0]?.message?.images;
+          // Check for images in both delta and message
+          const deltaImages = parsed.choices?.[0]?.delta?.images;
+          const messageImages = parsed.choices?.[0]?.message?.images;
+          const images = deltaImages || messageImages;
+          
           if (images && onImage) {
             for (const img of images) {
               if (img.image_url?.url) {
                 onImage(img.image_url.url);
+              } else if (img.url) {
+                onImage(img.url);
+              } else if (typeof img === 'string') {
+                onImage(img);
               }
             }
           }
@@ -116,12 +123,19 @@ export async function streamChat({
           const content = parsed.choices?.[0]?.delta?.content as string | undefined;
           if (content) onDelta(content);
           
-          // Check for images
-          const images = parsed.choices?.[0]?.message?.images;
+          // Check for images in both delta and message
+          const deltaImages = parsed.choices?.[0]?.delta?.images;
+          const messageImages = parsed.choices?.[0]?.message?.images;
+          const images = deltaImages || messageImages;
+          
           if (images && onImage) {
             for (const img of images) {
               if (img.image_url?.url) {
                 onImage(img.image_url.url);
+              } else if (img.url) {
+                onImage(img.url);
+              } else if (typeof img === 'string') {
+                onImage(img);
               }
             }
           }
